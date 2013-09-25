@@ -13,7 +13,7 @@ function TestsRoot(parent, data)
 	this.$divMenu.empty();
 	this.$divForm = $("#" + data.html.divForm);
 	this.$divForm.empty();
-	this.idOwner = data.owner.idOwner;
+	this.idSetter = data.setter.idSetter;
 
 	this.enter = function()
 	{
@@ -23,7 +23,7 @@ function TestsRoot(parent, data)
 			method: "readTests",
 			args:
 			{
-				idOwner: this.idOwner
+				idSetter: this.idSetter
 			}
 		});
 	}

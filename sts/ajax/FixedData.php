@@ -16,10 +16,10 @@ class FixedData
 			"divMenu" => "divMenu",
 		);
 
-		// Get the owner data from the login state ...
-		$owner = array
+		// Get the setter data from the login state ...
+		$setter = array
 		(
-			"idOwner" => StateLogin::getInstance()->idUser,
+			"idSetter" => StateLogin::getInstance()->idUser,
 			"level" => StateLogin::getInstance()->level,
 		);
 
@@ -34,7 +34,7 @@ class FixedData
 		return array(
 			"request" => "getFixedData",
 			"html" => $html,
-			"owner" => $owner,
+			"setter" => $setter,
 			"mods" => $mods,
 		);
 	}

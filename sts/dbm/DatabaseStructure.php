@@ -15,7 +15,7 @@ class DatabaseStructure
 			"group_key" => "",
 			"test_key" => "",
 			"keyword" => "",
-			"owner" => "",
+			"setter" => "",
 			"question" => "",
 			"question_test" => "",
 			"test" => "",
@@ -37,13 +37,13 @@ class DatabaseStructure
 		",
 
 		"keyword" => "
-		  `idOwner` int(10) unsigned NOT NULL,
-		  `indexOwner` tinyint(3) unsigned NOT NULL,
+		  `idSetter` int(10) unsigned NOT NULL,
+		  `indexSetter` tinyint(3) unsigned NOT NULL,
 		  `theWord` varchar(20) NOT NULL,
-		  PRIMARY KEY (`idOwner`,`indexOwner`)
+		  PRIMARY KEY (`idSetter`,`indexSetter`)
 		",
 
-		"owner" => "
+		"setter" => "
 		  `idUser` int(10) unsigned NOT NULL,
 		  PRIMARY KEY (`idUser`)
 		",
@@ -63,18 +63,18 @@ class DatabaseStructure
 
 		"test" => "
 		  `idTest` int(10) unsigned NOT NULL AUTO_INCREMENT,
-		  `idOwner` int(10) unsigned NOT NULL,
+		  `idSetter` int(10) unsigned NOT NULL,
 		  `name` varchar(80) NOT NULL,
 		  `descr` varchar(80) DEFAULT NULL,
 		  `added` datetime NOT NULL,
 		  PRIMARY KEY (`idTest`),
-		  UNIQUE KEY `idOwner` (`idOwner`,`name`)
+		  UNIQUE KEY `idSetter` (`idSetter`,`name`)
 		",
 
 		"test_key" => "
 		  `idTest` int(10) unsigned NOT NULL,
-		  `indexOwner` tinyint(3) unsigned NOT NULL,
-		  UNIQUE KEY `idGroup` (`idTest`,`indexOwner`)
+		  `indexSetter` tinyint(3) unsigned NOT NULL,
+		  UNIQUE KEY `idGroup` (`idTest`,`indexSetter`)
 		",
 
 		"user" => "

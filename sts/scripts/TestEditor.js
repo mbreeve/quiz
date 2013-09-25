@@ -220,7 +220,7 @@ function TestEditor(parent)
 			method: this.creating ? "createTest" : "updateTest",
 			args:
 			{
-				idOwner: this.root.idOwner,
+				idSetter: this.root.idSetter,
 				idTest: this.current.idTest,
 				name: this.current.name,
 				descr: this.current.descr,
@@ -232,7 +232,7 @@ function TestEditor(parent)
 			method: "readTests",
 			args:
 			{
-				idOwner: this.root.idOwner
+				idSetter: this.root.idSetter
 			}
 		});
 
@@ -260,7 +260,7 @@ function TestEditor(parent)
 				method: "readTests",
 				args:
 				{
-					idOwner: this.root.idOwner
+					idSetter: this.root.idSetter
 				}
 			});
 		}

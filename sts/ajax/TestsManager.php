@@ -7,7 +7,7 @@
 class TestsManager
 {
 	private $dbx;
-	private $idOwner = 0;
+	private $idSetter = 0;
 	private $idTest = 0;
 	private $name = "";
 	private $descr = "";
@@ -20,7 +20,7 @@ class TestsManager
 	public function readTests($args)
 	{	
 		$this->dbx = Connection::makeDbx(false);
-		$this->idOwner = $args["idOwner"];
+		$this->idSetter = $args["idSetter"];
 		$this->getAllTests();
 		$this->transformTests();
 		$this->getAllKeywords();
@@ -29,7 +29,7 @@ class TestsManager
 		// Return tests and keywords as separate branches ...
 		return array(
 			"request" => "readTests",
-			"idOwner" => $this->idOwner,
+			"idSetter" => $this->idSetter,
 			"tests" => $this->tests,
 			"keywords" => $this->keywords,
 		);
@@ -38,7 +38,7 @@ class TestsManager
 	public function createTest($args)
 	{
 		$this->dbx = Connection::makeDbx(false);
-		$this->idOwner = $args["idOwner"];
+		$this->idSetter = $args["idSetter"];
 		$this->keywords = $args["keywords"];
 		$this->name = $args["name"];
 		$this->descr = $args["descr"];
@@ -50,7 +50,7 @@ class TestsManager
 		$this->addNewLinks();
 		return array(
 			"request" => "createTest",
-			"idOwner" => $this->idOwner,
+			"idSetter" => $this->idSetter,
 			"idTest" => $this->idTest,
 		);
 	}
@@ -58,7 +58,7 @@ class TestsManager
 	public function updateTest($args)
 	{
 		$this->dbx = Connection::makeDbx(false);
-		$this->idOwner = $args["idOwner"];
+		$this->idSetter = $args["idSetter"];
 		$this->idTest = $args["idTest"];
 		$this->keywords = $args["keywords"];
 		$this->name = $args["name"];
@@ -97,13 +97,13 @@ FROM (test
 LEFT JOIN test_key
 ON test.idTest=test_key.idTest)
 LEFT JOIN keyword
-ON test.idOwner=keyword.idOwner AND test_key.indexOwner=keyword.indexOwner
-WHERE test.idOwner=:idOwner
+ON test.idSetter=keyword.idSetter AND test_key.indexSetter=keyword.indexSetter
+WHERE test.idSetter=:idSetter
 ORDER BY test.added, keyword.theWord;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idOwner" => $this->idOwner,
+			":idSetter" => $this->idSetter,
 		));
 		$this->tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
@@ -137,12 +137,12 @@ END_SQL;
 		$sql = <<<END_SQL
 SELECT theWord
 FROM keyword
-WHERE idOwner=:idOwner
+WHERE idSetter=:idSetter
 ORDER BY theWord;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idOwner" => $this->idOwner,
+			":idSetter" => $this->idSetter,
 		));
 		$this->newWords = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
@@ -160,10 +160,10 @@ END_SQL;
 	private function findCurrent()
 	{
 		$sql = <<<END_SQL
-SELECT indexOwner
+SELECT indexSetter
 FROM test_key
 WHERE idTest=:idTest
-ORDER BY indexOwner;
+ORDER BY indexSetter;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
@@ -172,27 +172,27 @@ END_SQL;
 		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		foreach ($rows as $row)
 		{
-			$this->curLinks[] = $row["indexOwner"];
+			$this->curLinks[] = $row["indexSetter"];
 		}
 	}
 
 	private function findRequired()
 	{
 		$sql = <<<END_SQL
-SELECT theWord, indexOwner
+SELECT theWord, indexSetter
 FROM keyword
-WHERE idOwner=:idOwner
-ORDER BY indexOwner;
+WHERE idSetter=:idSetter
+ORDER BY indexSetter;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idOwner" => $this->idOwner,
+			":idSetter" => $this->idSetter,
 		));
 		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		
 		// If there are already some keywords, then take the next index, else start at 1 ...
 		$count = count($rows);
-		$freeIndex = $count > 0 ? $rows[$count - 1]["indexOwner"] + 1 : 1;
+		$freeIndex = $count > 0 ? $rows[$count - 1]["indexSetter"] + 1 : 1;
 		foreach ($this->keywords as $theWord)
 		{
 			$found = false;
@@ -200,7 +200,7 @@ END_SQL;
 			{
 				if (strcasecmp($theWord, $row["theWord"]) == 0)
 				{
-					$this->reqLinks[] = $row["indexOwner"];
+					$this->reqLinks[] = $row["indexSetter"];
 					$found = true;
 					break;
 				}
@@ -216,12 +216,12 @@ END_SQL;
 	private function createTestRecord()
 	{
 		$sql = <<<END_SQL
-INSERT INTO test (idOwner, name, descr, added)
-VALUES (:idOwner, :name, :descr, now());
+INSERT INTO test (idSetter, name, descr, added)
+VALUES (:idSetter, :name, :descr, now());
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idOwner" => $this->idOwner,
+			":idSetter" => $this->idSetter,
 			":name" => $this->name,
 			":descr" => $this->descr,
 		));
@@ -230,16 +230,16 @@ END_SQL;
 
 	private function addNewWords()
 	{
-		foreach ($this->newWords as $indexOwner => $theWord)
+		foreach ($this->newWords as $indexSetter => $theWord)
 		{
 			$sql = <<<END_SQL
-INSERT INTO keyword (idOwner, indexOwner, theWord)
-VALUES (:idOwner, :indexOwner, :theWord);
+INSERT INTO keyword (idSetter, indexSetter, theWord)
+VALUES (:idSetter, :indexSetter, :theWord);
 END_SQL;
 			$stmt = $this->dbx->prepare($sql);
 			$stmt->execute(array(
-				":idOwner" => $this->idOwner,
-				":indexOwner" => $indexOwner,
+				":idSetter" => $this->idSetter,
+				":indexSetter" => $indexSetter,
 				":theWord" => $theWord,
 			));
 		}
@@ -247,32 +247,32 @@ END_SQL;
 
 	private function removeOldLinks()
 	{
-		foreach (array_diff($this->curLinks, $this->reqLinks) as $indexOwner)
+		foreach (array_diff($this->curLinks, $this->reqLinks) as $indexSetter)
 		{
 			$sql = <<<END_SQL
 DELETE FROM test_key
-WHERE idTest=:idTest AND indexOwner=:indexOwner;
+WHERE idTest=:idTest AND indexSetter=:indexSetter;
 END_SQL;
 			$stmt = $this->dbx->prepare($sql);
 			$stmt->execute(array(
 				":idTest" => $this->idTest,
-				":indexOwner" => $indexOwner,
+				":indexSetter" => $indexSetter,
 			));
 		}
 	}
 
 	private function addNewLinks()
 	{
-		foreach (array_diff($this->reqLinks, $this->curLinks) as $indexOwner)
+		foreach (array_diff($this->reqLinks, $this->curLinks) as $indexSetter)
 		{
 			$sql = <<<END_SQL
-INSERT INTO test_key (idTest, indexOwner)
-VALUES (:idTest, :indexOwner);
+INSERT INTO test_key (idTest, indexSetter)
+VALUES (:idTest, :indexSetter);
 END_SQL;
 			$stmt = $this->dbx->prepare($sql);
 			$stmt->execute(array(
 				":idTest" => $this->idTest,
-				":indexOwner" => $indexOwner,
+				":indexSetter" => $indexSetter,
 			));
 		}
 	}
