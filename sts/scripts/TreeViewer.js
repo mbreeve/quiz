@@ -246,7 +246,7 @@ function TreeViewer(parent)
 		}
 		this.menu.addItem("Exit Test Management", true, function()
 		{
-			thisObj.finish().parent.resume();
+			thisObj.parent.launch.exitTests();
 		});
 
 		this.menu.show();

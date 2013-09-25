@@ -8,7 +8,7 @@ class Connection
 {
 	const host = "localhost";
 	const dbn = "sorede5_sts";
-	const edbn = "sorede5_sqs";
+	const edbn = "sorede5_experimental";
 	const usr = "sorede5_rt";
 	const password = "tondu66690";
 

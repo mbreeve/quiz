@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Aug 15, 2013 at 12:07 PM
+-- Generation Time: Sep 25, 2013 at 04:06 PM
 -- Server version: 5.5.24-log
 -- PHP Version: 5.4.3
 
@@ -28,9 +28,8 @@ SET time_zone = "+00:00";
 
 CREATE TABLE IF NOT EXISTS `answer` (
   `idQuestion` int(10) unsigned NOT NULL,
-  `reply` varchar(40) NOT NULL,
-  `truth` tinyint(3) unsigned DEFAULT NULL,
-  `optnum` tinyint(3) DEFAULT NULL COMMENT 'used for multichoice questions',
+  `reply` varchar(40) NOT NULL COMMENT 'the answer/option text',
+  `optNum` tinyint(3) NOT NULL DEFAULT '0' COMMENT 'used for multichoice questions',
   PRIMARY KEY (`idQuestion`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -38,18 +37,12 @@ CREATE TABLE IF NOT EXISTS `answer` (
 -- Dumping data for table `answer`
 --
 
-INSERT INTO `answer` (`idQuestion`, `reply`, `truth`, `optnum`) VALUES
-(1, 'a1', NULL, NULL),
-(2, 'aaa', NULL, NULL),
-(3, 'aaaa', NULL, NULL),
-(4, 'a num1', NULL, NULL),
-(5, 'a', NULL, NULL),
-(6, 'aaaaaaaaaaaaaaaaaaaaaa', NULL, NULL),
-(7, 'yours', NULL, NULL),
-(8, 'no poiuyt', NULL, NULL),
-(9, 'he', NULL, NULL),
-(10, 'a11', NULL, NULL),
-(11, 'vv', NULL, NULL);
+INSERT INTO `answer` (`idQuestion`, `reply`, `optNum`) VALUES
+(1, 'a1', 0),
+(2, 'aa', 0),
+(3, 'm', 0),
+(4, 'aa', 0),
+(5, 'a1', 0);
 
 -- --------------------------------------------------------
 
@@ -58,31 +51,28 @@ INSERT INTO `answer` (`idQuestion`, `reply`, `truth`, `optnum`) VALUES
 --
 
 CREATE TABLE IF NOT EXISTS `keyword` (
-  `idOwner` int(10) unsigned NOT NULL,
-  `indexOwner` tinyint(3) unsigned NOT NULL,
+  `idSetter` int(10) unsigned NOT NULL,
+  `indexSetter` tinyint(3) unsigned NOT NULL,
   `theWord` varchar(20) NOT NULL,
-  PRIMARY KEY (`idOwner`,`indexOwner`)
+  PRIMARY KEY (`idSetter`,`indexSetter`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `keyword`
 --
 
-INSERT INTO `keyword` (`idOwner`, `indexOwner`, `theWord`) VALUES
+INSERT INTO `keyword` (`idSetter`, `indexSetter`, `theWord`) VALUES
 (3, 1, 'martin'),
-(3, 2, 'not a pig'),
-(3, 3, 'mbr');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `owner`
---
-
-CREATE TABLE IF NOT EXISTS `owner` (
-  `idUser` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`idUser`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+(3, 2, 'fred'),
+(3, 3, 'newp'),
+(3, 4, 'reevex'),
+(3, 5, 'poiuyt'),
+(3, 6, 'delete'),
+(3, 7, 'kw of doom'),
+(3, 8, 'bongobongo'),
+(3, 9, 'plonker'),
+(3, 10, 'yet another'),
+(3, 11, 'jumbo');
 
 -- --------------------------------------------------------
 
@@ -92,56 +82,32 @@ CREATE TABLE IF NOT EXISTS `owner` (
 
 CREATE TABLE IF NOT EXISTS `question` (
   `idQuestion` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `query` varchar(40) NOT NULL,
+  `query` varchar(40) NOT NULL COMMENT 'the question text',
+  `correct` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'correct option for multiple choice',
   PRIMARY KEY (`idQuestion`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=12 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `question`
 --
 
-INSERT INTO `question` (`idQuestion`, `query`) VALUES
-(1, 'q1'),
-(2, 'qqq'),
-(3, 'qqqq'),
-(4, 'q num1'),
-(5, 'q'),
-(6, 'qqqqqqqqqqqqqqqqqqq'),
-(7, 'mine'),
-(8, 'poiuyt'),
-(9, 'who'),
-(10, 'q11'),
-(11, 'vv');
+INSERT INTO `question` (`idQuestion`, `query`, `correct`) VALUES
+(1, 'q1', 0),
+(2, 'qq', 0),
+(3, 'm', 0),
+(4, 'qq', 0),
+(5, 'q1', 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `question_test`
+-- Table structure for table `setter`
 --
 
-CREATE TABLE IF NOT EXISTS `question_test` (
-  `idQuestion` int(10) unsigned NOT NULL,
-  `idTest` int(10) unsigned NOT NULL,
-  `sequence` int(10) unsigned DEFAULT NULL COMMENT 'Used to order questions within a group',
-  PRIMARY KEY (`idQuestion`,`idTest`)
+CREATE TABLE IF NOT EXISTS `setter` (
+  `idUser` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`idUser`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `question_test`
---
-
-INSERT INTO `question_test` (`idQuestion`, `idTest`, `sequence`) VALUES
-(1, 0, NULL),
-(2, 3, NULL),
-(3, 3, NULL),
-(4, 3, NULL),
-(5, 3, NULL),
-(6, 3, NULL),
-(7, 3, NULL),
-(8, 3, NULL),
-(9, 3, NULL),
-(10, 3, NULL),
-(11, 3, NULL);
 
 -- --------------------------------------------------------
 
@@ -151,21 +117,23 @@ INSERT INTO `question_test` (`idQuestion`, `idTest`, `sequence`) VALUES
 
 CREATE TABLE IF NOT EXISTS `test` (
   `idTest` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `idOwner` int(10) unsigned NOT NULL,
+  `idSetter` int(10) unsigned NOT NULL,
   `name` varchar(80) NOT NULL,
   `descr` varchar(80) DEFAULT NULL,
   `added` datetime NOT NULL,
   PRIMARY KEY (`idTest`),
-  UNIQUE KEY `idOwner` (`idOwner`,`name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
+  UNIQUE KEY `Setter` (`idSetter`,`name`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=13 ;
 
 --
 -- Dumping data for table `test`
 --
 
-INSERT INTO `test` (`idTest`, `idOwner`, `name`, `descr`, `added`) VALUES
-(1, 3, 'mbr''s', 'the first of many', '2013-08-14 15:14:14'),
-(3, 3, 'ongobongo', 'naughty', '2013-08-14 15:16:04');
+INSERT INTO `test` (`idTest`, `idSetter`, `name`, `descr`, `added`) VALUES
+(8, 3, 'mango', 'descriptio', '2013-08-20 13:47:42'),
+(10, 3, 'mbr''s', 'poo-eee', '2013-08-28 14:54:03'),
+(11, 3, 'new test', 'descr', '2013-09-10 15:10:24'),
+(12, 3, 'another new test ', 'nope', '2013-09-23 13:17:26');
 
 -- --------------------------------------------------------
 
@@ -175,19 +143,57 @@ INSERT INTO `test` (`idTest`, `idOwner`, `name`, `descr`, `added`) VALUES
 
 CREATE TABLE IF NOT EXISTS `test_key` (
   `idTest` int(10) unsigned NOT NULL,
-  `indexOwner` tinyint(3) unsigned NOT NULL,
-  UNIQUE KEY `idGroup` (`idTest`,`indexOwner`)
+  `indexSetter` tinyint(3) unsigned NOT NULL,
+  UNIQUE KEY `Test` (`idTest`,`indexSetter`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `test_key`
 --
 
-INSERT INTO `test_key` (`idTest`, `indexOwner`) VALUES
-(1, 1),
-(3, 1),
-(3, 2),
-(3, 3);
+INSERT INTO `test_key` (`idTest`, `indexSetter`) VALUES
+(8, 1),
+(8, 2),
+(8, 3),
+(8, 4),
+(8, 5),
+(8, 6),
+(8, 7),
+(8, 8),
+(8, 9),
+(10, 4),
+(10, 8),
+(10, 9),
+(11, 1),
+(11, 3),
+(11, 8),
+(11, 9),
+(12, 8),
+(12, 10);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `test_question`
+--
+
+CREATE TABLE IF NOT EXISTS `test_question` (
+  `idQuestion` int(10) unsigned NOT NULL,
+  `idTest` int(10) unsigned NOT NULL,
+  `sequence` double NOT NULL DEFAULT '0' COMMENT 'order questions in order',
+  PRIMARY KEY (`idQuestion`,`idTest`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `test_question`
+--
+
+INSERT INTO `test_question` (`idQuestion`, `idTest`, `sequence`) VALUES
+(1, 1, 0),
+(2, 1, 0),
+(3, 1, 0),
+(4, 1, 0),
+(5, 8, 0);
 
 -- --------------------------------------------------------
 
@@ -213,12 +219,12 @@ CREATE TABLE IF NOT EXISTS `user` (
 --
 
 INSERT INTO `user` (`idUser`, `firstName`, `lastName`, `password`, `emailAddr`, `level`, `actCode`, `added`) VALUES
-(1, 'super', 'user', 'a933b2d74681bcb3bb7b01f661a907752259fb70', 'super@x.com', 15, NULL, '2013-08-14 15:11:56'),
-(2, 'admin', 'user', 'd033e22ae348aeb5660fc2140aec35850c4da997', 'admin@x.com', 14, NULL, '2013-08-14 15:11:56'),
-(3, 'teacher', 'user', '4a82cb6db537ef6c5b53d144854e146de79502e8', 'teacher@x.com', 5, NULL, '2013-08-14 15:11:57'),
-(4, 'learner', 'user', 'b879c6e092ce6406eb1f806bf3757e49981974a7', 'learner@x.com', 4, NULL, '2013-08-14 15:11:57'),
-(5, 'student', 'user', '204036a1ef6e7360e536300ea78c6aeb4a9333dd', 'student@x.com', 3, NULL, '2013-08-14 15:11:57'),
-(6, 'browser', 'user', 'ef98362b8a6b0c8cd804b0d227aa1ffeaba89786', 'browser@x.com', 2, NULL, '2013-08-14 15:11:57');
+(1, 'super', 'user', 'a933b2d74681bcb3bb7b01f661a907752259fb70', 'super@x.com', 15, NULL, '2013-08-15 15:32:41'),
+(2, 'admin', 'user', 'd033e22ae348aeb5660fc2140aec35850c4da997', 'admin@x.com', 14, NULL, '2013-08-15 15:32:41'),
+(3, 'teacher', 'user', '4a82cb6db537ef6c5b53d144854e146de79502e8', 'teacher@x.com', 5, NULL, '2013-08-15 15:32:41'),
+(4, 'learner', 'user', 'b879c6e092ce6406eb1f806bf3757e49981974a7', 'learner@x.com', 4, NULL, '2013-08-15 15:32:41'),
+(5, 'student', 'user', '204036a1ef6e7360e536300ea78c6aeb4a9333dd', 'student@x.com', 3, NULL, '2013-08-15 15:32:42'),
+(6, 'browser', 'user', 'ef98362b8a6b0c8cd804b0d227aa1ffeaba89786', 'browser@x.com', 2, NULL, '2013-08-15 15:32:42');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

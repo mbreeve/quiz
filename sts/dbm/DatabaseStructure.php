@@ -11,16 +11,18 @@ class DatabaseStructure
 		return array
 		(
 			"answer" => "",
+			"keyword" => "",
+			"question" => "",
+			"setter" => "",
+			"test" => "",
+			"test_key" => "",
+			"test_question" => "",
+			"user" => "",
+			
+			"question_test" => "",
+			"testkeyword" => "",
 			"grouping" => "",
 			"group_key" => "",
-			"test_key" => "",
-			"keyword" => "",
-			"setter" => "",
-			"question" => "",
-			"question_test" => "",
-			"test" => "",
-			"testkeyword" => "",
-			"user" => "",
 		);
 	}
 
@@ -30,9 +32,8 @@ class DatabaseStructure
 		(
 		"answer" => "
 		  `idQuestion` int(10) unsigned NOT NULL,
-		  `reply` varchar(40) NOT NULL,
-		  `truth` tinyint(3) unsigned DEFAULT NULL,
-		  `optnum` tinyint(3) DEFAULT NULL COMMENT 'used for multichoice questions',
+		  `reply` varchar(40) NOT NULL COMMENT 'the answer/option text',
+		  `optNum` tinyint(3) NOT NULL DEFAULT '0' COMMENT 'used for multichoice questions',
 		  PRIMARY KEY (`idQuestion`)
 		",
 
@@ -43,22 +44,16 @@ class DatabaseStructure
 		  PRIMARY KEY (`idSetter`,`indexSetter`)
 		",
 
-		"setter" => "
-		  `idUser` int(10) unsigned NOT NULL,
-		  PRIMARY KEY (`idUser`)
-		",
-
 		"question" => "
 		  `idQuestion` int(10) unsigned NOT NULL AUTO_INCREMENT,
-		  `query` varchar(40) NOT NULL,
+		  `query` varchar(40) NOT NULL COMMENT 'the question text',
+		  `correct` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'correct option for multiple choice',
 		  PRIMARY KEY (`idQuestion`)
 		",
 
-		"question_test" => "
-		  `idQuestion` int(10) unsigned NOT NULL,
-		  `idTest` int(10) unsigned NOT NULL,
-		  `sequence` int(10) unsigned DEFAULT NULL COMMENT 'Used to order questions within a group',
-		  PRIMARY KEY (`idQuestion`,`idTest`)
+		"setter" => "
+		  `idUser` int(10) unsigned NOT NULL,
+		  PRIMARY KEY (`idUser`)
 		",
 
 		"test" => "
@@ -68,13 +63,20 @@ class DatabaseStructure
 		  `descr` varchar(80) DEFAULT NULL,
 		  `added` datetime NOT NULL,
 		  PRIMARY KEY (`idTest`),
-		  UNIQUE KEY `idSetter` (`idSetter`,`name`)
+		  UNIQUE KEY `Setter` (`idSetter`,`name`)
 		",
 
 		"test_key" => "
 		  `idTest` int(10) unsigned NOT NULL,
 		  `indexSetter` tinyint(3) unsigned NOT NULL,
-		  UNIQUE KEY `idGroup` (`idTest`,`indexSetter`)
+		  UNIQUE KEY `Test` (`idTest`,`indexSetter`)
+		",
+
+		"test_question" => "
+		  `idQuestion` int(10) unsigned NOT NULL,
+		  `idTest` int(10) unsigned NOT NULL,
+		  `sequence` double NOT NULL DEFAULT '0' COMMENT 'order questions in order',
+		  PRIMARY KEY (`idQuestion`,`idTest`)
 		",
 
 		"user" => "
