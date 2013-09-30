@@ -95,20 +95,22 @@ function TreeBuilder(parent)
 		$.each(data.tests, function()
 		{
 			var dbid = "T-" + this.idTest;
+			var item;
 			if (oldItems && oldItems[dbid])
 			{
-				newItems[dbid] = oldItems[dbid];
+				item = oldItems[dbid];
 			}
 			else
 			{
-				newItems[dbid] =
+				item =
 				{
 					type: "test",
-					position: "list",
-					data: makeTestData({ source: this }),
+					position: "item",
 					dbid: dbid
 				};
 			}
+			item.data = makeTestData({ source: this });
+			newItems[dbid] = item;
 		});
 
 		var dbid = "T-After";

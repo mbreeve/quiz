@@ -32,6 +32,24 @@ class TestsManager
 			"idSetter" => $this->idSetter,
 			"tests" => $this->tests,
 			"keywords" => $this->keywords,
+			"tables" => array(
+				0 => array(
+					"parent" => array(
+						"level" => "setter",
+						"id" => $this->idSetter,
+					),
+					"level" => "test",
+					"records" => $this->tests,
+				),
+				1 => array(
+					"parent" => array(
+						"level" => "setter",
+						"id" => $this->idSetter,
+					),
+					"level" => "keyword",
+					"records" => $this->keywords,
+				),
+			)
 		);
 	}
 

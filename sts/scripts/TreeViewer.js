@@ -116,7 +116,7 @@ function TreeViewer(parent)
 			case "user":
 				switch (this.position)
 				{
-				case "list":
+				case "item":
 					var user = this.data;
 					tt.action = "browse";
 					$tbody.append(
@@ -139,7 +139,7 @@ function TreeViewer(parent)
 							$("<td></td>").addClass("testDate"),
 							$("<td></td>").addClass("keywords")));
 					break;
-				case "list":
+				case "item":
 					tt.action = "browse";
 					var test = this.data;
 					$tbody.append(
@@ -155,7 +155,7 @@ function TreeViewer(parent)
 			case "question":
 				switch (this.position)
 				{
-				case "list":
+				case "item":
 					tt.action = "browse";
 					var question = this.data;
 					$tbody.append(
