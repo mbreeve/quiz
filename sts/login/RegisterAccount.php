@@ -80,15 +80,27 @@ class RegisterAccount extends Page
 			":actCode" => $actCode,
 		));
 
+		// Add the user to the setter table. This will change, since not all users will
+		// automatically be teachers (setters) ...
+		$idUser = $dbx->lastInsertId();
+		$sql = 
+			"INSERT INTO setter (idUser) " .
+			"VALUES (:idUser);";
+		$stmt = $dbx->prepare($sql);
+		$stmt->execute(array(
+			":idUser" => $idUser,
+		));
+
+		
 		// Everything is ok past this point. There is therefore no form to correct.
 		State::closeForm();
 
 		// Provide info for the user for the next time an HTML page is shown ...
 		$content->setGreeting
 		(
-			"Thank you for registering",
+			"Thank you for registering. " .
 			"A confirmation email has been sent to your address. " .
-			"Please click on the link in that email in order to activate your account"
+			"Please click on the link in that email in order to activate your account."
 		);
 
 		// Construct an email, and send it, or, in the case of a local server,

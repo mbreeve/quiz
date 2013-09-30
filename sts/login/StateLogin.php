@@ -12,7 +12,7 @@ class StateLogin extends State
 	const browser = 2;    // browser level only
 	const student = 3;    // takes tests set by somebody else
 	const learner = 4;    // sets own tests
-	const teacher = 5;    // sets tests for students
+	const setter = 5;     // sets tests for students
 	const admin = 14;     // administrator
 	const super = 15;     // superuser: can do anything (caution!)
 

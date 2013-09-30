@@ -35,12 +35,24 @@ class EmptyDatabase extends Page
 			$stmt->execute();
 		}
 
+		$tables = DatabaseStructure::getConstraints();
+		foreach ($tables as $table => $constraint)
+		{
+			$sql = "ALTER TABLE $table ADD CONSTRAINT $constraint;";
+			$stmt = $dbx->prepare($sql);
+			$stmt->execute();
+		}
+
 		// Insert special users into the user table. The same SQL statement does for
 		// all such users ...
 		$sql =
 			"INSERT INTO user (emailAddr, password, firstName, lastName, level, added) " .
 			"VALUES (:emailAddr, :password, :firstName, :lastName, :level, now());";
 		$stmt = $dbx->prepare($sql);
+		$xsql =
+			"INSERT INTO setter (idUser) " .
+			"VALUES (:idUser);";
+		$xstmt = $dbx->prepare($xsql);
 
 		// Get the users from the preset array ...
 		$users = DatabaseStructure::getUsers();
@@ -48,20 +60,30 @@ class EmptyDatabase extends Page
 		// Substitute the values as appropriate from the array ...
 		foreach ($users as $user => $values)
 		{
+			$ea = $values["emailAddr"];
+			$pw = $values["password"];
+			$fn = $user;
+			$ln = "user";
+			$level = $values["level"];
 			$stmt->execute(array(
-				":emailAddr" => $values["emailAddr"],
-				":password" => $values["password"],
-				":firstName" => $user,
-				":lastName" => "user",
-				":level" => $values["level"],
+				":emailAddr" => $ea,
+				":password" => $pw,
+				":firstName" => $fn,
+				":lastName" => $ln,
+				":level" => $level,
+			));
+
+			$idUser = $dbx->lastInsertId();
+			$xstmt->execute(array(
+				":idUser" => $idUser,
 			));
 		}
 
 		// Everything is ok ...
 		$content->setGreeting
 		(
-			"An empty database has been created",
-			"You have been logged out"
+			"An empty database has been created.",
+			"You have been logged out."
 		);
 
 		// Nothing more to be done ...

@@ -94,6 +94,16 @@ class DatabaseStructure
 		);
 	}
 
+	public static function getConstraints()
+	{
+		return array
+		(
+		"setter" => "
+		  `setter_ibfk_1` FOREIGN KEY (`idUser`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
+		",
+		);
+	}
+
 	public static function getUsers()
 	{
 		return array
@@ -112,11 +122,11 @@ class DatabaseStructure
 				"level" => StateLogin::admin,
 			),
 
-			"teacher" => array
+			"setter" => array
 			(
-				"emailAddr" => "teacher@x.com",
-				"password" => "4a82cb6db537ef6c5b53d144854e146de79502e8",
-				"level" => StateLogin::teacher,
+				"emailAddr" => "setter@x.com",
+				"password" => "02ac648906a6828f331d73e868fceca24e06da77",
+				"level" => StateLogin::setter,
 			),
 
 			"learner" => array
