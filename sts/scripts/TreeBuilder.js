@@ -106,7 +106,7 @@ function TreeBuilder(parent)
 				{
 					type: "test",
 					position: "item",
-					dbid: dbid
+					dbid: dbid,
 				};
 			}
 			item.data = makeTestData({ source: this });

@@ -109,7 +109,9 @@ function TreeViewer(parent)
 				ttBranch: true,
 				dbid: this.dbid,
 				pdbid: this.pdbid,
-				type: this.type
+				type: this.type,
+				position: this.position,
+				action: this.type + " " + this.position
 			};
 			switch (this.type)
 			{
@@ -118,9 +120,8 @@ function TreeViewer(parent)
 				{
 				case "item":
 					var user = this.data;
-					tt.action = "browse";
 					$tbody.append(
-						this.$row = $("<tr></tr>").addClass("selectable").data(tt).append(
+						$("<tr></tr>").addClass("selectable").data(tt).append(
 							$("<td></td>").addClass("itemName").text("user.name").prepend(
 								$("<span></span>").addClass("user"))));
 					break;
@@ -132,7 +133,6 @@ function TreeViewer(parent)
 				{
 				case "before":	
 					tt.ttBranch = false;
-					tt.action = "create";
 					$tbody.append(
 						$("<tr></tr>").addClass("selectable").data(tt).append(
 							$("<td></td>").addClass("itemName").text("Create Test"),
@@ -140,10 +140,9 @@ function TreeViewer(parent)
 							$("<td></td>").addClass("keywords")));
 					break;
 				case "item":
-					tt.action = "browse";
 					var test = this.data;
 					$tbody.append(
-						this.$row = $("<tr></tr>").addClass("selectable").data(tt).append(
+						$("<tr></tr>").addClass("selectable").data(tt).append(
 							$("<td></td>").addClass("itemName").text(test.name).prepend(
 								$("<span></span>").addClass("test")),
 							$("<td></td>").addClass("testDate").text(test.added),
@@ -159,13 +158,14 @@ function TreeViewer(parent)
 					tt.action = "browse";
 					var question = this.data;
 					$tbody.append(
-						this.$row = $("<tr></tr>").addClass("selectable").data(tt).append(
+						$("<tr></tr>").addClass("selectable").data(tt).append(
 							$("<td></td>").addClass("questionName").text("question.name").prepend(
 								$("<span></span>").addClass("question"))));
 					break;
 				}
 				break;
 			}
+			this.display = tt;
 		});
 		this.$tableTests.treetable({ expandable: true });
 
@@ -206,11 +206,11 @@ function TreeViewer(parent)
 		var create = false;
 		switch ($row.data("action"))
 		{
-		case "create":
+		case "test before":
 			create = true;
 			test = makeTestData({ });
 			break;
-		case "browse":
+		case "test item":
 			test = this.root.items[dbid].data;
 			break;
 		}
