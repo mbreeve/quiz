@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Sep 30, 2013 at 01:26 PM
+-- Generation Time: Oct 05, 2013 at 12:40 PM
 -- Server version: 5.5.24-log
 -- PHP Version: 5.4.3
 
@@ -147,22 +147,40 @@ CREATE TABLE IF NOT EXISTS `user` (
 --
 
 INSERT INTO `user` (`idUser`, `firstName`, `lastName`, `password`, `emailAddr`, `level`, `actCode`, `added`) VALUES
-(1, 'super', 'user', 'a933b2d74681bcb3bb7b01f661a907752259fb70', 'super@x.com', 15, NULL, '2013-09-30 14:17:01'),
-(2, 'admin', 'user', 'd033e22ae348aeb5660fc2140aec35850c4da997', 'admin@x.com', 14, NULL, '2013-09-30 14:17:01'),
-(3, 'setter', 'user', '02ac648906a6828f331d73e868fceca24e06da77', 'setter@x.com', 5, NULL, '2013-09-30 14:17:01'),
-(4, 'learner', 'user', 'b879c6e092ce6406eb1f806bf3757e49981974a7', 'learner@x.com', 4, NULL, '2013-09-30 14:17:02'),
-(5, 'student', 'user', '204036a1ef6e7360e536300ea78c6aeb4a9333dd', 'student@x.com', 3, NULL, '2013-09-30 14:17:02'),
-(6, 'browser', 'user', 'ef98362b8a6b0c8cd804b0d227aa1ffeaba89786', 'browser@x.com', 2, NULL, '2013-09-30 14:17:02');
+(1, 'super', 'user', 'a933b2d74681bcb3bb7b01f661a907752259fb70', 'super@x.com', 15, NULL, '2013-10-05 13:11:27'),
+(2, 'admin', 'user', 'd033e22ae348aeb5660fc2140aec35850c4da997', 'admin@x.com', 14, NULL, '2013-10-05 13:11:28'),
+(3, 'setter', 'user', '02ac648906a6828f331d73e868fceca24e06da77', 'setter@x.com', 5, NULL, '2013-10-05 13:11:28'),
+(4, 'learner', 'user', 'b879c6e092ce6406eb1f806bf3757e49981974a7', 'learner@x.com', 4, NULL, '2013-10-05 13:11:28'),
+(5, 'student', 'user', '204036a1ef6e7360e536300ea78c6aeb4a9333dd', 'student@x.com', 3, NULL, '2013-10-05 13:11:28'),
+(6, 'browser', 'user', 'ef98362b8a6b0c8cd804b0d227aa1ffeaba89786', 'browser@x.com', 2, NULL, '2013-10-05 13:11:28');
 
 --
 -- Constraints for dumped tables
 --
 
 --
+-- Constraints for table `keyword`
+--
+ALTER TABLE `keyword`
+  ADD CONSTRAINT `keyword_ibfk_1` FOREIGN KEY (`idSetter`) REFERENCES `setter` (`idUser`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `setter`
 --
 ALTER TABLE `setter`
-  ADD CONSTRAINT `setter_ibfk_1` FOREIGN KEY (`idUser`) REFERENCES `user` (`idUser`) ON DELETE CASCADE;
+  ADD CONSTRAINT `setter_ibfk_2` FOREIGN KEY (`idUser`) REFERENCES `user` (`idUser`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `test`
+--
+ALTER TABLE `test`
+  ADD CONSTRAINT `test_ibfk_3` FOREIGN KEY (`idSetter`) REFERENCES `setter` (`idUser`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `test_key`
+--
+ALTER TABLE `test_key`
+  ADD CONSTRAINT `test_key_ibfk_4` FOREIGN KEY (`idTest`) REFERENCES `test` (`idTest`) ON DELETE CASCADE;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

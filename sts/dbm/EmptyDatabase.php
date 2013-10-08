@@ -36,9 +36,12 @@ class EmptyDatabase extends Page
 		}
 
 		$tables = DatabaseStructure::getConstraints();
+		$index = 0;
 		foreach ($tables as $table => $constraint)
 		{
-			$sql = "ALTER TABLE $table ADD CONSTRAINT $constraint;";
+			$name = $table . "_ibfk_" . ++$index;
+			//++$index;
+			$sql = "ALTER TABLE $table ADD CONSTRAINT `$name` FOREIGN KEY $constraint;";
 			$stmt = $dbx->prepare($sql);
 			$stmt->execute();
 		}

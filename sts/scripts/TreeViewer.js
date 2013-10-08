@@ -17,15 +17,7 @@ function TreeViewer(parent)
 	this.menu.hide();
 
 	this.root.$divForm.append(
-		this.$divOuter = $("<div id='treeViewer'></div>").hide().append(
-			this.$tableTests = $("<table id='tableLister' class='stand'></table>").append(
-				$("<thead></thead>").append(
-					$("<tr></tr>").append(
-						$("<th></th>").addClass("itemName").text("Name"),
-						$("<th></th>").addClass("testDate").text("Date Added"),
-						$("<th></th>").addClass("keywords").text("Keywords"))),
-				this.$tbody = $("<tbody></tbody>"))));
-
+		this.$divOuter = $("<div id='treeViewer'></div>").hide());
 	var lister = this;
 	this.$divOuter.on("click", ".selectable", function()
 	{
@@ -64,6 +56,7 @@ function TreeViewer(parent)
 	{
 		if (this.viewing !== false)
 		{
+			this.displayAll();
 			this.resume();
 		}
 	}
@@ -89,7 +82,7 @@ function TreeViewer(parent)
 	// Resume state on this browser/editor after returning from finish() on a child
 	this.resume = function()
 	{
-		this.displayAll();
+		//this.displayAll();
 		this.menu.show();
 		this.$divOuter.show();
 		this.root.whiteBoard.setGreeting("Display All Tests");
@@ -99,12 +92,21 @@ function TreeViewer(parent)
 
 	this.displayAll = function()
 	{
-		var $tbody = this.$tbody;
-		var items = this.root.items;
-		$tbody.empty();
-		$.each(items, function()
+		var $tableTests;
+		var $tbody;
+
+		this.$divOuter.empty().append(
+			$tableTests = $("<table id='tableLister' class='stand'></table>").append(
+				$("<thead></thead>").append(
+					$("<tr></tr>").append(
+						$("<th></th>").addClass("itemName").text("Name"),
+						$("<th></th>").addClass("testDate").text("Date Added"),
+						$("<th></th>").addClass("keywords").text("Keywords"))),
+				$tbody = $("<tbody></tbody>")));
+
+		$.each(this.root.items, function()
 		{
-			var tt =
+			var display = this.$row ? this.$row.data() : 
 			{
 				ttBranch: true,
 				dbid: this.dbid,
@@ -119,9 +121,9 @@ function TreeViewer(parent)
 				switch (this.position)
 				{
 				case "item":
-					var user = this.data;
+					var user = this.db;
 					$tbody.append(
-						$("<tr></tr>").addClass("selectable").data(tt).append(
+						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
 							$("<td></td>").addClass("itemName").text("user.name").prepend(
 								$("<span></span>").addClass("user"))));
 					break;
@@ -132,17 +134,17 @@ function TreeViewer(parent)
 				switch (this.position)
 				{
 				case "before":	
-					tt.ttBranch = false;
+					display.ttBranch = false;
 					$tbody.append(
-						$("<tr></tr>").addClass("selectable").data(tt).append(
+						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
 							$("<td></td>").addClass("itemName").text("Create Test"),
 							$("<td></td>").addClass("testDate"),
 							$("<td></td>").addClass("keywords")));
 					break;
 				case "item":
-					var test = this.data;
+					var test = this.db;
 					$tbody.append(
-						$("<tr></tr>").addClass("selectable").data(tt).append(
+						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
 							$("<td></td>").addClass("itemName").text(test.name).prepend(
 								$("<span></span>").addClass("test")),
 							$("<td></td>").addClass("testDate").text(test.added),
@@ -155,19 +157,18 @@ function TreeViewer(parent)
 				switch (this.position)
 				{
 				case "item":
-					tt.action = "browse";
-					var question = this.data;
+					display.action = "browse";
+					var question = this.db;
 					$tbody.append(
-						$("<tr></tr>").addClass("selectable").data(tt).append(
+						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
 							$("<td></td>").addClass("questionName").text("question.name").prepend(
 								$("<span></span>").addClass("question"))));
 					break;
 				}
 				break;
 			}
-			this.display = tt;
 		});
-		this.$tableTests.treetable({ expandable: true });
+		$tableTests.treetable({ expandable: true });
 
 		// Find out which row to select. First time through, this will be the
 		// zeroth row. Otherwise it will be the row with the test (identified
@@ -211,7 +212,7 @@ function TreeViewer(parent)
 			test = makeTestData({ });
 			break;
 		case "test item":
-			test = this.root.items[dbid].data;
+			test = this.root.items[dbid].db;
 			break;
 		}
 
@@ -231,10 +232,6 @@ function TreeViewer(parent)
 			else
 			{
 				this.menu.addItem("View/Edit" + name, true, function()
-				{
-					thisObj.suspend().getQuestionsLister().enter(test);
-				});
-				this.menu.addItem("View" + name, true, function()
 				{
 					thisObj.suspend().getTestEditor().enter();
 				});

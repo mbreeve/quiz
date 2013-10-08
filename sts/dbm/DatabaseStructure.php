@@ -13,10 +13,10 @@ class DatabaseStructure
 			"answer" => "",
 			"keyword" => "",
 			"question" => "",
-			"setter" => "",
-			"test" => "",
 			"test_key" => "",
+			"test" => "",
 			"test_question" => "",
+			"setter" => "",
 			"user" => "",
 			
 			"question_test" => "",
@@ -98,8 +98,17 @@ class DatabaseStructure
 	{
 		return array
 		(
+		"keyword" => "
+		  (`idSetter`) REFERENCES `setter` (`idUser`) ON DELETE CASCADE
+		",
 		"setter" => "
-		  `setter_ibfk_1` FOREIGN KEY (`idUser`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
+		  (`idUser`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
+		",
+		"test" => "
+		  (`idSetter`) REFERENCES `setter` (`idUser`) ON DELETE CASCADE
+		",
+		"test_key" => "
+		  (`idTest`) REFERENCES `test` (`idTest`) ON DELETE CASCADE
 		",
 		);
 	}

@@ -94,7 +94,8 @@ function QuestionsLister(parent)
 		return this;
 	};
 
-	// Enter/resume this from a calling parent, or a returning child, browser/editor. New data has been passed in.
+	// Enter/resume this from a calling parent, or a returning child, browser/editor.
+	// New data has been passed in.
 	this.enter = function(test)
 	{
 		if (test !== undefined)

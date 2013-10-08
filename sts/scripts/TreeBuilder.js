@@ -99,6 +99,7 @@ function TreeBuilder(parent)
 			if (oldItems && oldItems[dbid])
 			{
 				item = oldItems[dbid];
+				//alert("old item");
 			}
 			else
 			{
@@ -106,10 +107,11 @@ function TreeBuilder(parent)
 				{
 					type: "test",
 					position: "item",
-					dbid: dbid,
+					dbid: dbid
 				};
+				//alert("new item");
 			}
-			item.data = makeTestData({ source: this });
+			item.db = makeTestData({ source: this });
 			newItems[dbid] = item;
 		});
 

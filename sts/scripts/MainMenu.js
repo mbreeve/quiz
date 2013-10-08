@@ -59,6 +59,11 @@ function MainMenu(root, marker)
 		this.$divOuter.hide();
 	};
 
+	this.empty = function()
+	{
+		this.$divOuter.empty();
+	};
+
 	this.addItem = function(text, enabled, action)
 	{
 		var id = this.callbacks.push(action) - 1;
