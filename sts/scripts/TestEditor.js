@@ -44,7 +44,7 @@ function TestEditor(parent)
 	this.$divOuter.on("keyup", ".inputs", function()
 	{
 		thisObj.syncDisplay(true);
-		thisObj.lookForChanges();
+		thisObj.adjustMenu();
 	});
 
 	// Get the keyword selector, creating if necessary ...
@@ -157,7 +157,7 @@ function TestEditor(parent)
 		this.syncDisplay();
 		this.$divOuter.show();
 		this.showOptions();
-		this.lookForChanges();
+		this.adjustMenu();
 		return this;
 	};
 
@@ -208,7 +208,7 @@ function TestEditor(parent)
 	{
 		this.current = makeTestData({ source: this.original });
 		this.syncDisplay();
-		this.lookForChanges();
+		this.adjustMenu();
 		return this;
 	};
 
@@ -234,11 +234,19 @@ function TestEditor(parent)
 			{
 				idSetter: this.root.idSetter
 			}
+		},
+		{
+			class: "TestsManager",
+			method: "readKeywords",
+			args:
+			{
+				idSetter: this.root.idSetter
+			}
 		});
 
 		this.original = makeTestData({ source: this.current });
 		this.creating = false;
-		this.lookForChanges();
+		this.adjustMenu();
 		return this;
 	};
 
@@ -282,7 +290,7 @@ function TestEditor(parent)
 		return this;
 	};
 
-	this.lookForChanges = function()
+	this.adjustMenu = function()
 	{
 		var enable = this.current.name.length > 0 &&
 			(this.creating ||

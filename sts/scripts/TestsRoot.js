@@ -20,6 +20,14 @@ function TestsRoot(parent, data)
 		this.launch.postAjax(
 		{
 			class: "TestsManager",
+			method: "readKeywords",
+			args:
+			{
+				idSetter: this.idSetter
+			}
+		},
+		{
+			class: "TestsManager",
 			method: "readTests",
 			args:
 			{

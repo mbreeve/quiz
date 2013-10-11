@@ -17,21 +17,43 @@ class TestsManager
 	private $curLinks = array();
 	private $reqLinks = array();
 
+	public function readKeywords($args)
+	{	
+		$this->dbx = Connection::makeDbx(false);
+		$this->idSetter = $args["idSetter"];
+		$this->getAllKeywords();
+		$this->transformKeywords();
+
+		// Return tests and keywords as separate branches ...
+		return array(
+			"request" => "readKeywords",
+			"idSetter" => $this->idSetter,
+			"keywords" => $this->keywords,
+			"tables" => array(
+				0 => array(
+					"parent" => array(
+						"level" => "setter",
+						"id" => $this->idSetter,
+					),
+					"level" => "keyword",
+					"records" => $this->keywords,
+				),
+			)
+		);
+	}
+
 	public function readTests($args)
 	{	
 		$this->dbx = Connection::makeDbx(false);
 		$this->idSetter = $args["idSetter"];
 		$this->getAllTests();
 		$this->transformTests();
-		$this->getAllKeywords();
-		$this->transformKeywords();
 
 		// Return tests and keywords as separate branches ...
 		return array(
 			"request" => "readTests",
 			"idSetter" => $this->idSetter,
 			"tests" => $this->tests,
-			"keywords" => $this->keywords,
 			"tables" => array(
 				0 => array(
 					"parent" => array(
@@ -40,14 +62,6 @@ class TestsManager
 					),
 					"level" => "test",
 					"records" => $this->tests,
-				),
-				1 => array(
-					"parent" => array(
-						"level" => "setter",
-						"id" => $this->idSetter,
-					),
-					"level" => "keyword",
-					"records" => $this->keywords,
 				),
 			)
 		);

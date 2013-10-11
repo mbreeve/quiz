@@ -56,10 +56,13 @@ function TreeBuilder(parent)
 	{
 		switch (data.request)
 		{
+		case "readKeywords":
+			this.copyKeywords(data);					// copy across the keywords
+			return true;
+
 		case "readTests":
-			this.copyKeywords(data);				// copy across the keywords
-			this.copyTests(data);						// copy across the tests
-			this.getTreeViewer().enter();		// update our view
+			this.copyTests(data);							// copy across the tests
+			this.getTreeViewer().updateTests();
 			return true;
 
 		default:
@@ -81,11 +84,11 @@ function TreeBuilder(parent)
 	// Copy across the tests
 	this.copyTests = function(data)
 	{
-		var oldItems = this.root.items;
-		var newItems = { };
+		var oldObjects = this.root.objects;
+		var newObjects = { };
 
 		var dbid = "T-Before";
-		newItems[dbid] =
+		newObjects[dbid] =
 		{
 			type: "test",
 			position: "before",
@@ -95,34 +98,47 @@ function TreeBuilder(parent)
 		$.each(data.tests, function()
 		{
 			var dbid = "T-" + this.idTest;
-			var item;
-			if (oldItems && oldItems[dbid])
+			var object;
+			if (oldObjects && oldObjects[dbid])
 			{
-				item = oldItems[dbid];
-				//alert("old item");
+				object = oldObjects[dbid];
+				object.rowData = object.$row.data();
+				object.classes = object.$row.attr("class");
+/*
+				var descr = "";
+				$.each(object.rowData, function(key, val)
+				{
+					if (descr)
+					{
+						descr += ",\n";
+					}
+					descr += (key + " = " + val);
+				});
+				alert(descr);
+*/
 			}
 			else
 			{
-				item =
+				object =
 				{
 					type: "test",
 					position: "item",
 					dbid: dbid
 				};
-				//alert("new item");
+				//alert("new object");
 			}
-			item.db = makeTestData({ source: this });
-			newItems[dbid] = item;
+			object.db = makeTestData({ source: this });
+			newObjects[dbid] = object;
 		});
 
 		var dbid = "T-After";
-		newItems[dbid] =
+		newObjects[dbid] =
 		{
 			type: "test",
 			position: "after",
 			dbid: dbid
 		};
 		
-		this.root.items = newItems;
+		this.root.objects = newObjects;
 	}
 }

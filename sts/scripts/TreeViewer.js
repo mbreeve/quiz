@@ -9,7 +9,9 @@ function TreeViewer(parent)
 	this.parent = parent;
 	this.root = parent.root;
 	this.launch = this.root.launch;
+	this.setup = false;
 
+	this.viewing = null;
 	this.curIndex = 0;
 	this.curDbid = 0;
 	this.menu = new MainMenu(this.root, "treeViewer");
@@ -50,15 +52,16 @@ function TreeViewer(parent)
 		return this.getTestEditor().dispatch(data);
 	}
 
-	// If we are viewing the results of this browser, or we have not yet viewed
-	// anything (this.viewing === undefined), then update our view.
-	this.enter = function()
+	// Update the view of the tests.
+	this.updateTests = function()
 	{
-		if (this.viewing !== false)
+		this.displayAll();
+		if (!this.viewing || this.viewing == this)
 		{
-			this.displayAll();
+			this.selectCurRow();
 			this.resume();
 		}
+		return this;
 	}
 
 	// Finish this and return to the calling (parent) browser/editor
@@ -69,24 +72,22 @@ function TreeViewer(parent)
 		return this;
 	};
 
+	// Resume state on this browser/editor after returning from finish() on a child
+	this.resume = function()
+	{
+		this.$divOuter.show();
+		this.menu.show();
+		this.root.whiteBoard.setGreeting("Display All Tests");
+		this.viewing = this;
+		return this;
+	};
+
 	// Save state on this browser/editor before calling enter() on a child
 	this.suspend = function()
 	{
 		this.root.whiteBoard.clearGreeting();
-		this.viewing = false;
 		this.$divOuter.hide();
 		this.menu.hide();
-		return this;
-	};
-
-	// Resume state on this browser/editor after returning from finish() on a child
-	this.resume = function()
-	{
-		//this.displayAll();
-		this.menu.show();
-		this.$divOuter.show();
-		this.root.whiteBoard.setGreeting("Display All Tests");
-		this.viewing = true;
 		return this;
 	};
 
@@ -104,72 +105,71 @@ function TreeViewer(parent)
 						$("<th></th>").addClass("keywords").text("Keywords"))),
 				$tbody = $("<tbody></tbody>")));
 
-		$.each(this.root.items, function()
+		var root = this.root;
+		$.each(root.objects, function(dbid, object)
 		{
-			var display = this.$row ? this.$row.data() : 
+			var classes = object.classes ? object.classes : "selectable";
+			var rowData = object.rowData ? object.rowData : 
 			{
 				ttBranch: true,
-				dbid: this.dbid,
-				pdbid: this.pdbid,
-				type: this.type,
-				position: this.position,
-				action: this.type + " " + this.position
+				dbid: object.dbid,
+				pdbid: object.pdbid,
+				type: object.type,
+				position: object.position,
+				action: object.type + " " + object.position
 			};
-			switch (this.type)
+			var $row;
+			switch (rowData.action)
 			{
-			case "user":
-				switch (this.position)
-				{
-				case "item":
-					var user = this.db;
-					$tbody.append(
-						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
-							$("<td></td>").addClass("itemName").text("user.name").prepend(
-								$("<span></span>").addClass("user"))));
-					break;
-				}
+			case "user item":
+				var user = object.db;
+				$tbody.append(
+					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
+						$("<td></td>").addClass("itemName").text("user.name").prepend(
+							$("<span></span>").addClass("user"))));
 				break;
 
-			case "test":
-				switch (this.position)
-				{
-				case "before":	
-					display.ttBranch = false;
-					$tbody.append(
-						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
-							$("<td></td>").addClass("itemName").text("Create Test"),
-							$("<td></td>").addClass("testDate"),
-							$("<td></td>").addClass("keywords")));
-					break;
-				case "item":
-					var test = this.db;
-					$tbody.append(
-						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
-							$("<td></td>").addClass("itemName").text(test.name).prepend(
-								$("<span></span>").addClass("test")),
-							$("<td></td>").addClass("testDate").text(test.added),
-							$("<td></td>").addClass("keywords").text(test.kwText)));
-					break;
-				}
+			case "test before":	
+				rowData.ttBranch = false;
+				$tbody.append(
+					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
+						$("<td></td>").addClass("itemName").text("Create Test"),
+						$("<td></td>").addClass("testDate"),
+						$("<td></td>").addClass("keywords")));
 				break;
 
-			case "question":
-				switch (this.position)
-				{
-				case "item":
-					display.action = "browse";
-					var question = this.db;
-					$tbody.append(
-						this.$row = $("<tr></tr>").addClass("selectable").data(display).append(
-							$("<td></td>").addClass("questionName").text("question.name").prepend(
-								$("<span></span>").addClass("question"))));
-					break;
-				}
+			case "test item":
+				var test = object.db;
+				$tbody.append(
+					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
+						$("<td></td>").addClass("itemName").text(test.name).prepend(
+							$("<span></span>").addClass("test")),
+						$("<td></td>").addClass("testDate").text(test.added),
+						$("<td></td>").addClass("keywords").text(test.kwText)));
+				break;
+
+			case "question item":
+				rowData.action = "browse";
+				var question = object.db;
+				$tbody.append(
+					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
+						$("<td></td>").addClass("questionName").text("question.name").prepend(
+							$("<span></span>").addClass("question"))));
 				break;
 			}
+			// Keep the object reference against the row in a reasonably enduring way.
+			root.objects[dbid].$row = $row;
 		});
+		var $expandeds = $tbody.children(".expanded");
 		$tableTests.treetable({ expandable: true });
+		$expandeds.each(function()
+		{
+			$tableTests.treetable("expandNode", $(this).data("dbid"));
+		});
+	};
 
+	this.selectCurRow = function()
+	{
 		// Find out which row to select. First time through, this will be the
 		// zeroth row. Otherwise it will be the row with the test (identified
 		// by dbid - its database id) that was last selected. After a deletion,
@@ -212,12 +212,13 @@ function TreeViewer(parent)
 			test = makeTestData({ });
 			break;
 		case "test item":
-			test = this.root.items[dbid].db;
+			test = this.root.objects[dbid].db;
 			break;
 		}
 
 		this.menu.clearItems();
 		var thisObj = this;
+		var te = this.getTestEditor();
 		if (test)
 		{
 			this.getTestEditor().select(test);
@@ -226,6 +227,7 @@ function TreeViewer(parent)
 			{
 				this.menu.addItem("Create New Test", true, function()
 				{
+					thisObj.viewing = te;
 					thisObj.suspend().getTestEditor().enter();
 				});
 			}
@@ -233,10 +235,12 @@ function TreeViewer(parent)
 			{
 				this.menu.addItem("View/Edit" + name, true, function()
 				{
+					thisObj.viewing = te;
 					thisObj.suspend().getTestEditor().enter();
 				});
 				this.menu.addItem("Delete" + name, true, function()
 				{
+					thisObj.viewing = te;
 					thisObj.suspend().getTestEditor().delete();
 				});
 			}
