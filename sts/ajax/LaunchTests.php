@@ -18,7 +18,7 @@ class LaunchTests extends Page
 		$style = Globals::get("style");
 		$jquery = Globals::get("jquery");
 		$scripts = Globals::get("scripts");
- 
+
 		// Set the following css includes as the content of the style div ...
 		$content->styleHtml = <<<END_HTML
 <div id='style'>

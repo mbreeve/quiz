@@ -17,53 +17,23 @@ class TestsManager
 	private $curLinks = array();
 	private $reqLinks = array();
 
-	public function readKeywords($args)
-	{	
+	public function setSetter($args)
+	{
 		$this->dbx = Connection::makeDbx(false);
 		$this->idSetter = $args["idSetter"];
 		$this->getAllKeywords();
 		$this->transformKeywords();
-
-		// Return tests and keywords as separate branches ...
-		return array(
-			"request" => "readKeywords",
-			"idSetter" => $this->idSetter,
-			"keywords" => $this->keywords,
-			"tables" => array(
-				0 => array(
-					"parent" => array(
-						"level" => "setter",
-						"id" => $this->idSetter,
-					),
-					"level" => "keyword",
-					"records" => $this->keywords,
-				),
-			)
-		);
-	}
-
-	public function readTests($args)
-	{	
-		$this->dbx = Connection::makeDbx(false);
-		$this->idSetter = $args["idSetter"];
 		$this->getAllTests();
 		$this->transformTests();
-
-		// Return tests and keywords as separate branches ...
+		
 		return array(
-			"request" => "readTests",
-			"idSetter" => $this->idSetter,
-			"tests" => $this->tests,
-			"tables" => array(
-				0 => array(
-					"parent" => array(
-						"level" => "setter",
-						"id" => $this->idSetter,
-					),
-					"level" => "test",
-					"records" => $this->tests,
-				),
-			)
+			"request" => "setSetter",
+			"database" => array(
+				// Return tests and keywords as separate branches ...
+				"idSetter" => $this->idSetter,
+				"keywords" => $this->keywords,
+				"tests" => $this->tests,
+			),
 		);
 	}
 
@@ -80,10 +50,22 @@ class TestsManager
 		$this->createTestRecord();
 		$this->addNewWords();
 		$this->addNewLinks();
+		// Get the keywords and tests: they may have changed ...
+		$this->getAllKeywords();
+		$this->transformKeywords();
+		$this->getAllTests();
+		$this->transformTests();
+
 		return array(
 			"request" => "createTest",
 			"idSetter" => $this->idSetter,
 			"idTest" => $this->idTest,
+			"database" => array(
+				// Return tests and keywords as separate branches ...
+				"idSetter" => $this->idSetter,
+				"keywords" => $this->keywords,
+				"tests" => $this->tests,
+			),
 		);
 	}
 
@@ -103,20 +85,38 @@ class TestsManager
 		$this->removeOldLinks();
 		$this->addNewLinks();
 		$this->updateTestRecord();
+		// Get the keywords and tests: they may have changed ...
+		$this->getAllKeywords();
+		$this->transformKeywords();
+		$this->getAllTests();
+		$this->transformTests();
 		return array(
 			"request" => "updateTest",
 			"idTest" => $this->idTest,
+			"database" => array(
+				// Return tests and keywords as separate branches ...
+				"idSetter" => $this->idSetter,
+				"keywords" => $this->keywords,
+				"tests" => $this->tests,
+			),
 		);
 	}
 
 	public function deleteTest($args)
 	{
 		$this->dbx = Connection::makeDbx(false);
+		$this->idSetter = $args["idSetter"];
 		$this->idTest = $args["idTest"];
 		$this->deleteTestRecord();
+		$this->getAllTests();
+		$this->transformTests();
 		return array(
 			"request" => "deleteTest",
 			"idTest" => $this->idTest,
+			"database" => array(
+				"idSetter" => $this->idSetter,
+				"tests" => $this->tests,
+			),
 		);
 	}
 
@@ -151,7 +151,7 @@ END_SQL;
 			unset($test["theWord"]);
 			if ($repTest && $test["idTest"] == $repTest["idTest"])
 			{
-				unset($this->tests[$i]);									// delete this row
+				unset($this->tests[$i]);                  // delete this row
 				// ... this doesn't change the array indexes, but apparently, we don't care!
 			}
 			else
@@ -221,7 +221,7 @@ END_SQL;
 			":idSetter" => $this->idSetter,
 		));
 		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		
+
 		// If there are already some keywords, then take the next index, else start at 1 ...
 		$count = count($rows);
 		$freeIndex = $count > 0 ? $rows[$count - 1]["indexSetter"] + 1 : 1;

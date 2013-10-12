@@ -20,15 +20,7 @@ function TestsRoot(parent, data)
 		this.launch.postAjax(
 		{
 			class: "TestsManager",
-			method: "readKeywords",
-			args:
-			{
-				idSetter: this.idSetter
-			}
-		},
-		{
-			class: "TestsManager",
-			method: "readTests",
+			method: "setSetter",
 			args:
 			{
 				idSetter: this.idSetter
@@ -47,9 +39,9 @@ function TestsRoot(parent, data)
 	};
 
 	// This is the response to ajax calls, i.e. asynchronously to everything else.
-	this.dispatch = function(data)
+	this.dispatch = function(response)
 	{
-		return this.getTreeBuilder().dispatch(data);
+		return this.getTreeBuilder().dispatch(response);
 	};
 
 	this.resume = function()

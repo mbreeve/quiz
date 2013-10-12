@@ -109,7 +109,7 @@ function TreeViewer(parent)
 		$.each(root.objects, function(dbid, object)
 		{
 			var classes = object.classes ? object.classes : "selectable";
-			var rowData = object.rowData ? object.rowData : 
+			var rowData = object.rowData ? object.rowData :
 			{
 				ttBranch: true,
 				dbid: object.dbid,
@@ -129,7 +129,7 @@ function TreeViewer(parent)
 							$("<span></span>").addClass("user"))));
 				break;
 
-			case "test before":	
+			case "test before":
 				rowData.ttBranch = false;
 				$tbody.append(
 					$row = $("<tr></tr>").addClass(classes).data(rowData).append(

@@ -7,7 +7,7 @@
 class FixedData
 {
 	public function getFixedData($args)
-	{	
+	{
 		// Get the element ids that will be used by jquery to create patches of html ...
 		$html = array
 		(

@@ -12,7 +12,7 @@ class QuestionsManager
 	private $reply = "";
 
 	public function readQuestions($args)
-	{	
+	{
 		$this->dbx = Connection::makeDbx(false);
 		$this->idTest = $args["idTest"];
 		$this->getAllQuestions();

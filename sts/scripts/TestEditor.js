@@ -226,22 +226,6 @@ function TestEditor(parent)
 				descr: this.current.descr,
 				keywords: this.current.keywords
 			}
-		},
-		{
-			class: "TestsManager",
-			method: "readTests",
-			args:
-			{
-				idSetter: this.root.idSetter
-			}
-		},
-		{
-			class: "TestsManager",
-			method: "readKeywords",
-			args:
-			{
-				idSetter: this.root.idSetter
-			}
 		});
 
 		this.original = makeTestData({ source: this.current });
@@ -260,15 +244,8 @@ function TestEditor(parent)
 				method: "deleteTest",
 				args:
 				{
+					idSetter: this.root.idSetter,
 					idTest: this.current.idTest
-				}
-			},
-			{
-				class: "TestsManager",
-				method: "readTests",
-				args:
-				{
-					idSetter: this.root.idSetter
 				}
 			});
 		}

@@ -52,93 +52,85 @@ function TreeBuilder(parent)
 	};
 
 	// This is the response to ajax calls, i.e. asynchronously to everything else.
-	this.dispatch = function(data)
+	this.dispatch = function(response)
 	{
-		switch (data.request)
+		if (response.database)
 		{
-		case "readKeywords":
-			this.copyKeywords(data);					// copy across the keywords
-			return true;
-
-		case "readTests":
-			this.copyTests(data);							// copy across the tests
+			this.copyKeywords(response.database.keywords);		// copy across the keywords
+			this.copyTests(response.database.tests);          // copy across the tests
 			this.getTreeViewer().updateTests();
+		}
+		switch (response.request)
+		{
+		case "setSetter":
 			return true;
-
 		default:
-			return this.getTreeViewer().dispatch(data);
+			return this.getTreeViewer().dispatch(response);
 		}
 	}
 
 	// Copy across the keywords
-	this.copyKeywords = function(data)
+	this.copyKeywords = function(keywords)
 	{
-		var root = this.root;
-		root.allKeywords = { };
-		$.each(data.keywords, function(lc, keyword)
+		if (keywords)
 		{
-			root.allKeywords[lc] = keyword;
-		});
+			var root = this.root;
+			root.allKeywords = { };
+			$.each(keywords, function(lc, keyword)
+			{
+				root.allKeywords[lc] = keyword;
+			});
+		}
 	}
 
 	// Copy across the tests
-	this.copyTests = function(data)
+	this.copyTests = function(tests)
 	{
-		var oldObjects = this.root.objects;
-		var newObjects = { };
-
-		var dbid = "T-Before";
-		newObjects[dbid] =
+		if (tests)
 		{
-			type: "test",
-			position: "before",
-			dbid: dbid
-		};
-
-		$.each(data.tests, function()
-		{
-			var dbid = "T-" + this.idTest;
-			var object;
-			if (oldObjects && oldObjects[dbid])
+			var oldObjects = this.root.objects;
+			var newObjects = { };
+	
+			var dbid = "T-Before";
+			newObjects[dbid] =
 			{
-				object = oldObjects[dbid];
-				object.rowData = object.$row.data();
-				object.classes = object.$row.attr("class");
-/*
-				var descr = "";
-				$.each(object.rowData, function(key, val)
+				type: "test",
+				position: "before",
+				dbid: dbid
+			};
+	
+			$.each(tests, function()
+			{
+				var dbid = "T-" + this.idTest;
+				var object;
+				if (oldObjects && oldObjects[dbid])
 				{
-					if (descr)
+					object = oldObjects[dbid];
+					object.rowData = object.$row.data();
+					object.classes = object.$row.attr("class");
+				}
+				else
+				{
+					object =
 					{
-						descr += ",\n";
-					}
-					descr += (key + " = " + val);
-				});
-				alert(descr);
-*/
-			}
-			else
+						type: "test",
+						position: "item",
+						dbid: dbid
+					};
+				}
+				object.db = makeTestData({ source: this });
+				newObjects[dbid] = object;
+			});
+	
+			var dbid = "T-After";
+			newObjects[dbid] =
 			{
-				object =
-				{
-					type: "test",
-					position: "item",
-					dbid: dbid
-				};
-				//alert("new object");
-			}
-			object.db = makeTestData({ source: this });
-			newObjects[dbid] = object;
-		});
-
-		var dbid = "T-After";
-		newObjects[dbid] =
-		{
-			type: "test",
-			position: "after",
-			dbid: dbid
-		};
-		
-		this.root.objects = newObjects;
+				type: "test",
+				position: "after",
+				dbid: dbid
+			};
+	
+			this.root.objects = newObjects;
+		}
 	}
 }
