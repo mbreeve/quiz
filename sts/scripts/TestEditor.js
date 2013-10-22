@@ -39,7 +39,7 @@ function TestEditor(parent)
 	var thisObj = this;
 	this.$kwText.click(function()
 	{
-		thisObj.suspend().getKeywordSelector().enter(thisObj.current);
+		thisObj.suspend().getKeywordSelector().enter(thisObj.setter, thisObj.current);
 	});
 	this.$divOuter.on("keyup", ".inputs", function()
 	{
@@ -80,7 +80,8 @@ function TestEditor(parent)
 	// This is the response to ajax calls, i.e. asynchronously to everything else.
 	this.dispatch = function(data)
 	{
-		switch (data.request)
+		//switch (data.request)
+		switch (data.method)
 		{
 		case "createTest":
 		case "updateTest":
@@ -91,11 +92,12 @@ function TestEditor(parent)
 		}
 	}
 
-	this.select = function(test)
+	this.select = function(setter, test)
 	{
+		this.setter = setter;
 		this.test = test;
-		this.original = makeTestData({ source: test });
-		this.current = makeTestData({ source: test });
+		this.original = makeTestFields({ source: test });
+		this.current = makeTestFields({ source: test });
 		this.creating = (test.idTest == 0);
 		if (!this.creating)
 		{
@@ -153,7 +155,7 @@ function TestEditor(parent)
 	{
 		this.menu.show();
 		this.root.whiteBoard.setGreeting("View/Edit Test");
-		this.current = makeTestData({ source: test });
+		this.current = makeTestFields({ source: test });
 		this.syncDisplay();
 		this.$divOuter.show();
 		this.showOptions();
@@ -206,7 +208,7 @@ function TestEditor(parent)
 
 	this.abandon = function()
 	{
-		this.current = makeTestData({ source: this.original });
+		this.current = makeTestFields({ source: this.original });
 		this.syncDisplay();
 		this.adjustMenu();
 		return this;
@@ -228,7 +230,7 @@ function TestEditor(parent)
 			}
 		});
 
-		this.original = makeTestData({ source: this.current });
+		this.original = makeTestFields({ source: this.current });
 		this.creating = false;
 		this.adjustMenu();
 		return this;

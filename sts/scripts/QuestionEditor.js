@@ -38,7 +38,8 @@ function QuestionEditor(parent)
 	// This is the response to ajax calls, i.e. asynchronously to everything else.
 	this.dispatch = function(data)
 	{
-		switch (data.request)
+		//switch (data.request)
+		switch (data.method)
 		{
 		case "createQuestion":
 		case "updateQuestion":

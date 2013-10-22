@@ -21,7 +21,7 @@ class QueryTests extends Page
 			try
 			{
 				$class = new $class();
-				$task["db"] = $class->$method($task["args"]);
+				$task = array_merge($task, $class->$method($task["args"]));
 			}
 			catch (Exception $e)
 			{

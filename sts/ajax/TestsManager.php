@@ -11,29 +11,27 @@ class TestsManager
 	private $idTest = 0;
 	private $name = "";
 	private $descr = "";
-	private $tests = array();
 	private $keywords = array();
 	private $newWords = array();
 	private $curLinks = array();
 	private $reqLinks = array();
 
-	public function setSetter($args)
+	public function loginSetter($args)
 	{
 		$this->dbx = Connection::makeDbx(false);
-		$this->idSetter = $args["idSetter"];
-		$this->getAllKeywords();
-		$this->transformKeywords();
-		$this->getAllTests();
-		$this->transformTests();
-		
-		return array(
-			"request" => "setSetter",
-			"database" => array(
-				// Return tests and keywords as separate branches ...
-				"idSetter" => $this->idSetter,
-				"keywords" => $this->keywords,
-				"tests" => $this->tests,
-			),
+		$idLogged = $args["idLogged"];
+		$database = array();
+		$setters = $this->getSetters($idLogged);
+		$database[] = $setters;
+		foreach ($setters["records"] as $setter)
+		{
+			$idSetter = $setter["idSetter"];
+			$database[] = $this->getKeywords($idSetter);
+			$database[] = $this->getTests($idSetter);
+		}
+		return array
+		(
+			"database" => $database,
 		);
 	}
 
@@ -50,22 +48,14 @@ class TestsManager
 		$this->createTestRecord();
 		$this->addNewWords();
 		$this->addNewLinks();
-		// Get the keywords and tests: they may have changed ...
-		$this->getAllKeywords();
-		$this->transformKeywords();
-		$this->getAllTests();
-		$this->transformTests();
 
-		return array(
-			"request" => "createTest",
-			"idSetter" => $this->idSetter,
-			"idTest" => $this->idTest,
-			"database" => array(
-				// Return tests and keywords as separate branches ...
-				"idSetter" => $this->idSetter,
-				"keywords" => $this->keywords,
-				"tests" => $this->tests,
-			),
+		$database = array();
+		$idSetter = $this->idSetter;
+		$database[] = $this->getKeywords($idSetter);
+		$database[] = $this->getTests($idSetter);
+		return array
+		(
+			"database" => $database,
 		);
 	}
 
@@ -85,20 +75,14 @@ class TestsManager
 		$this->removeOldLinks();
 		$this->addNewLinks();
 		$this->updateTestRecord();
-		// Get the keywords and tests: they may have changed ...
-		$this->getAllKeywords();
-		$this->transformKeywords();
-		$this->getAllTests();
-		$this->transformTests();
-		return array(
-			"request" => "updateTest",
-			"idTest" => $this->idTest,
-			"database" => array(
-				// Return tests and keywords as separate branches ...
-				"idSetter" => $this->idSetter,
-				"keywords" => $this->keywords,
-				"tests" => $this->tests,
-			),
+
+		$database = array();
+		$idSetter = $this->idSetter;
+		$database[] = $this->getKeywords($idSetter);
+		$database[] = $this->getTests($idSetter);
+		return array
+		(
+			"database" => $database,
 		);
 	}
 
@@ -108,19 +92,37 @@ class TestsManager
 		$this->idSetter = $args["idSetter"];
 		$this->idTest = $args["idTest"];
 		$this->deleteTestRecord();
-		$this->getAllTests();
-		$this->transformTests();
-		return array(
-			"request" => "deleteTest",
-			"idTest" => $this->idTest,
-			"database" => array(
-				"idSetter" => $this->idSetter,
-				"tests" => $this->tests,
-			),
+
+		$database = array();
+		$database[] = $this->getTests($this->idSetter);
+		return array
+		(
+			"database" => $database,
 		);
 	}
 
-	private function getAllTests()
+	private function getSetters($idLogged)
+	{
+		$sql = <<<END_SQL
+SELECT idSetter, setterName
+FROM setter
+WHERE idSetter=:idSetter
+END_SQL;
+		$stmt = $this->dbx->prepare($sql);
+		$stmt->execute(array(
+			":idSetter" => $idLogged,
+		));
+		$records = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: array();
+		return array
+		(
+			"action" => "list",
+			"table" => "setter",
+			"pid" => 0,
+			"records" => $records,
+		);
+	}
+
+	private function getTests($idSetter)
 	{
 		$sql = <<<END_SQL
 SELECT test.idTest AS idTest, name, descr, theWord,
@@ -135,23 +137,22 @@ ORDER BY test.added, keyword.theWord;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idSetter" => $this->idSetter,
+			":idSetter" => $idSetter,
 		));
-		$this->tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-	}
+		$records = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: array();
 
-	private function transformTests()
-	{
+		// Transform the test records by creating potentially multiple references to
+		// keywords in the same test record ...
 		$repTest = 0;
-		$count = count($this->tests);
+		$count = count($records);
 		for ($i = 0; $i < $count; ++$i)
 		{
-			$test = &$this->tests[$i];
+			$test = &$records[$i];
 			$key = $test["theWord"];
 			unset($test["theWord"]);
 			if ($repTest && $test["idTest"] == $repTest["idTest"])
 			{
-				unset($this->tests[$i]);                  // delete this row
+				unset($records[$i]);                  // delete this row
 				// ... this doesn't change the array indexes, but apparently, we don't care!
 			}
 			else
@@ -161,9 +162,16 @@ END_SQL;
 			}
 			$repTest["keywords"][strtolower($key)] = $key;
 		}
+		return array
+		(
+			"action" => "list",
+			"table" => "test",
+			"pid" => $idSetter,
+			"records" => $records,
+		);
 	}
 
-	private function getAllKeywords()
+	private function getKeywords($idSetter)
 	{
 		// Get all the keywords ...
 		$sql = <<<END_SQL
@@ -174,19 +182,26 @@ ORDER BY theWord;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idSetter" => $this->idSetter,
+			":idSetter" => $idSetter,
 		));
-		$this->newWords = $stmt->fetchAll(PDO::FETCH_ASSOC);
-	}
+		$words = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: array();
 
-	private function transformKeywords()
-	{
-		$count = count($this->newWords);
+		// We now need to rearrange the keywords as an associative array ...
+		$records = array();
+		$count = count($words);
 		for ($i = 0; $i < $count; ++$i)
 		{
-			$key = $this->newWords[$i]["theWord"];
-			$this->keywords[strtolower($key)] = $key;
+			$key = $words[$i]["theWord"];
+			$records[strtolower($key)] = $key;
 		}
+
+		return array
+		(
+			"action" => "list",
+			"table" => "keyword",
+			"pid" => $idSetter,
+			"records" => $records,
+		);
 	}
 
 	private function findCurrent()

@@ -52,8 +52,9 @@ class DatabaseStructure
 		",
 
 		"setter" => "
-		  `idUser` int(10) unsigned NOT NULL,
-		  PRIMARY KEY (`idUser`)
+		  `idSetter` int(10) unsigned NOT NULL,
+		  `setterName` varchar(80) NOT NULL,
+		  PRIMARY KEY (`idSetter`)
 		",
 
 		"test" => "
@@ -99,13 +100,13 @@ class DatabaseStructure
 		return array
 		(
 		"keyword" => "
-		  (`idSetter`) REFERENCES `setter` (`idUser`) ON DELETE CASCADE
+		  (`idSetter`) REFERENCES `setter` (`idSetter`) ON DELETE CASCADE
 		",
 		"setter" => "
-		  (`idUser`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
+		  (`idSetter`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
 		",
 		"test" => "
-		  (`idSetter`) REFERENCES `setter` (`idUser`) ON DELETE CASCADE
+		  (`idSetter`) REFERENCES `setter` (`idSetter`) ON DELETE CASCADE
 		",
 		"test_key" => "
 		  (`idTest`) REFERENCES `test` (`idTest`) ON DELETE CASCADE

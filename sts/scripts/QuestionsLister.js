@@ -30,7 +30,7 @@ function QuestionsLister(parent)
 	this.launch = this.root.launch;
 
 	this.curIndex = 0;
-	this.curDbid = 0;
+	this.ttid = 0;
 	this.menu = new MainMenu(this.root, "questionsLister");
 	this.menu.setFixed();
 	this.menu.hide();
@@ -60,7 +60,8 @@ function QuestionsLister(parent)
 	this.dispatch = function(data)
 	{
 		var root = this.root;
-		switch (data.request)
+		//switch (data.request)
+		switch (data.method)
 		{
 		case "readQuestions":
 			// Copy across the questions of the given test ...
@@ -129,7 +130,7 @@ function QuestionsLister(parent)
 
 		// Find out which row to select. First time through, this will be the
 		// zeroth row. Otherwise it will be the row with the question (identified
-		// by dbid - its database id) that was last selected. After a deletion,
+		// by ttid - its database id) that was last selected. After a deletion,
 		// that row will no longer exist, so the row with the same position is
 		// selected instead (taking care not not go off the end of the table).
 
@@ -137,7 +138,7 @@ function QuestionsLister(parent)
 		var maxRow = $rows.length - 1;
 		if (maxRow >= 0)
 		{
-			var $row = $rows.filter("#" + this.curDbid);
+			var $row = $rows.filter("#" + this.ttid);
 			if ($row.length == 0)
 			{
 				$row = $rows.eq(Math.min(Math.max(this.curIndex, 0), maxRow));
@@ -150,15 +151,10 @@ function QuestionsLister(parent)
 	this.selectRow = function(row)
 	{
 		var $row = $(row);
-		var $oldRow = $row.siblings(".selected");
-		if ($oldRow.length > 0)
-		{
-			$oldRow.removeClass("selected");
-		}
-		$row.addClass("selected");
+		$row.addClass("selected").siblings().removeClass("selected");
 		this.curIndex = $row.index();
-		var dbid = this.curDbid = parseInt($row.attr("id"));
-		this.question = dbid == 0 ? makeQuestionData({ }) : this.root.allQuestions[dbid];
+		var ttid = this.ttid = parseInt($row.attr("id"));
+		this.question = ttid == 0 ? makeQuestionData({ }) : this.root.allQuestions[ttid];
 		this.getQuestionEditor().select(this.question);
 		return this;
 	};

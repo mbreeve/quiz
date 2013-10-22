@@ -13,7 +13,7 @@ function TreeViewer(parent)
 
 	this.viewing = null;
 	this.curIndex = 0;
-	this.curDbid = 0;
+	this.ttid = 0;
 	this.menu = new MainMenu(this.root, "treeViewer");
 	this.menu.setFixed();
 	this.menu.hide();
@@ -52,18 +52,6 @@ function TreeViewer(parent)
 		return this.getTestEditor().dispatch(data);
 	}
 
-	// Update the view of the tests.
-	this.updateTests = function()
-	{
-		this.displayAll();
-		if (!this.viewing || this.viewing == this)
-		{
-			this.selectCurRow();
-			this.resume();
-		}
-		return this;
-	}
-
 	// Finish this and return to the calling (parent) browser/editor
 	this.finish = function()
 	{
@@ -79,6 +67,7 @@ function TreeViewer(parent)
 		this.menu.show();
 		this.root.whiteBoard.setGreeting("Display All Tests");
 		this.viewing = this;
+		this.expandNodes(false);
 		return this;
 	};
 
@@ -91,13 +80,24 @@ function TreeViewer(parent)
 		return this;
 	};
 
+	// Update the view of the tests.
+	this.updateTests = function()
+	{
+		this.displayAll();
+		if (!this.viewing || this.viewing == this)
+		{
+			this.selectCurRow();
+			this.resume();
+		}
+		return this;
+	}
+
 	this.displayAll = function()
 	{
-		var $tableTests;
-		var $tbody;
+		var $table, $tbody, $row;
 
 		this.$divOuter.empty().append(
-			$tableTests = $("<table id='tableLister' class='stand'></table>").append(
+			$table = $("<table id='tableLister' class='stand'></table>").append(
 				$("<thead></thead>").append(
 					$("<tr></tr>").append(
 						$("<th></th>").addClass("itemName").text("Name"),
@@ -105,81 +105,89 @@ function TreeViewer(parent)
 						$("<th></th>").addClass("keywords").text("Keywords"))),
 				$tbody = $("<tbody></tbody>")));
 
-		var root = this.root;
-		$.each(root.objects, function(dbid, object)
+		$.each(this.root.setters, function(idSetter, setter)
 		{
-			var classes = object.classes ? object.classes : "selectable";
-			var rowData = object.rowData ? object.rowData :
+			$tbody.append(
+				$row = $("<tr></tr>").addClass("selectable").append(
+					$("<td></td>").addClass("itemName").text("Create Test"),
+					$("<td></td>").addClass("testDate"),
+					$("<td></td>").addClass("keywords")));
+			$row.data(
 			{
-				ttBranch: true,
-				dbid: object.dbid,
-				pdbid: object.pdbid,
-				type: object.type,
-				position: object.position,
-				action: object.type + " " + object.position
-			};
-			var $row;
-			switch (rowData.action)
-			{
-			case "user item":
-				var user = object.db;
-				$tbody.append(
-					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
-						$("<td></td>").addClass("itemName").text("user.name").prepend(
-							$("<span></span>").addClass("user"))));
-				break;
+				ttid: "T-Before",
+				setter: setter,
+				action: "newTest"
+			});
 
-			case "test before":
-				rowData.ttBranch = false;
+			$.each(setter.tests, function(idTest, test)
+			{
 				$tbody.append(
-					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
-						$("<td></td>").addClass("itemName").text("Create Test"),
+					$row = $("<tr></tr>").addClass("selectable").append(
+						$("<td></td>").addClass("itemName").text(test.fields.name).prepend(
+							$("<span></span>").addClass("test")),
+						$("<td></td>").addClass("testDate").text(test.fields.added),
+						$("<td></td>").addClass("keywords").text(test.fields.kwText)));
+				$row.data(
+				{
+					ttid: idTest,
+					setter: setter,
+					test: test,
+					action: "test",
+					branch: true
+				});
+				if (test.$row && test.$row.hasClass("expanded"))
+				{
+					$row.addClass("xxx");
+				}
+				// Keep the record reference against the row in a reasonably enduring way.
+				setter.tests[idTest].$row = $row;
+
+				$tbody.append(
+					$row = $("<tr></tr>").addClass("selectable").append(
+						$("<td></td>").addClass("itemName").text("Create Question"),
 						$("<td></td>").addClass("testDate"),
 						$("<td></td>").addClass("keywords")));
-				break;
-
-			case "test item":
-				var test = object.db;
-				$tbody.append(
-					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
-						$("<td></td>").addClass("itemName").text(test.name).prepend(
-							$("<span></span>").addClass("test")),
-						$("<td></td>").addClass("testDate").text(test.added),
-						$("<td></td>").addClass("keywords").text(test.kwText)));
-				break;
-
-			case "question item":
-				rowData.action = "browse";
-				var question = object.db;
-				$tbody.append(
-					$row = $("<tr></tr>").addClass(classes).data(rowData).append(
-						$("<td></td>").addClass("questionName").text("question.name").prepend(
-							$("<span></span>").addClass("question"))));
-				break;
-			}
-			// Keep the object reference against the row in a reasonably enduring way.
-			root.objects[dbid].$row = $row;
+				$row.data(
+				{
+					pid: idTest,
+					ttid: "Q-After",
+					action: "newQuestion"
+				});
+/*
+				case "question record":
+					var question = test.db;
+					$tbody.append(
+						$row.append(
+							$("<td></td>").addClass("questionName").text("question.name").prepend(
+								$("<span></span>").addClass("question"))));
+					break;
+*/
+			});
 		});
-		var $expandeds = $tbody.children(".expanded");
-		$tableTests.treetable({ expandable: true });
-		$expandeds.each(function()
+		this.$expandeds = $tbody.children(".xxx");
+		$table.treetable(
 		{
-			$tableTests.treetable("expandNode", $(this).data("dbid"));
+			branchAttr: "branch",
+			expandable: true,
+			nodeIdAttr: "ttid",
+			parentIdAttr: "pid"
 		});
+		this.$table = $table;
+		this.expandNodes(true);
 	};
 
 	this.selectCurRow = function()
 	{
 		// Find out which row to select. First time through, this will be the
 		// zeroth row. Otherwise it will be the row with the test (identified
-		// by dbid - its database id) that was last selected. After a deletion,
+		// by ttid - its treetable id) that was last selected. After a deletion,
 		// that row will no longer exist, so the row with the same position is
 		// selected instead (taking care not not go off the end of the table).
 		var $rows = this.$divOuter.find(".selectable");
 		var maxRow = $rows.length - 1;
 		if (maxRow >= 0)
 		{
-			var $row = $rows.filter("#" + this.curDbid);
+			var $row = $rows.filter("#" + this.ttid);
 			if ($row.length == 0)
 			{
 				$row = $rows.eq(Math.min(Math.max(this.curIndex, 0), maxRow));
@@ -194,35 +202,33 @@ function TreeViewer(parent)
 
 	this.selectRow = function($row)
 	{
-		var $oldRow = $row.siblings(".selected");
-		if ($oldRow.length > 0)
-		{
-			$oldRow.removeClass("selected");
-		}
-		$row.addClass("selected");
+		$row.addClass("selected").siblings().removeClass("selected");
 		this.$row = $row;
 		this.curIndex = $row.index();
-		var dbid = this.curDbid = $row.data("dbid");
-		var test;
+		var ttid = this.ttid = $row.data("ttid");
+		var setter = { };
+		var test = { };
 		var create = false;
 		switch ($row.data("action"))
 		{
-		case "test before":
+		case "newTest":
 			create = true;
-			test = makeTestData({ });
+			setter = $row.data("setter");
+			test.fields = makeTestFields({ });
 			break;
-		case "test item":
-			test = this.root.objects[dbid].db;
+		case "test":
+			setter = $row.data("setter");
+			test = $row.data("test");
 			break;
 		}
 
 		this.menu.clearItems();
 		var thisObj = this;
 		var te = this.getTestEditor();
-		if (test)
+		if (test.fields)
 		{
-			this.getTestEditor().select(test);
-			var name = " <" + test.name + ">";
+			this.getTestEditor().select(setter, test.fields);
+			var name = " <" + test.fields.name + ">";
 			if (create)
 			{
 				this.menu.addItem("Create New Test", true, function()
@@ -252,5 +258,28 @@ function TreeViewer(parent)
 
 		this.menu.show();
 		return this;
+	};
+
+	this.expandNodes = function(required)
+	{
+		if (this.viewing == this)
+		{
+			if (required || this.outstanding)
+			{
+				var $table = this.$table;
+				this.$expandeds.each(function()
+				{
+					$table.treetable("expandNode", $(this).data("ttid"));
+				});
+				this.outstanding = false;
+			}
+		}
+		else
+		{
+			if (required)
+			{
+				this.outstanding = true;
+			}
+		}
 	};
 }

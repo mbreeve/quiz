@@ -32,7 +32,7 @@ class FixedData
 
 		// Put them all together for json
 		return array(
-			"request" => "getFixedData",
+			//"request" => "getFixedData",
 			"html" => $html,
 			"setter" => $setter,
 			"mods" => $mods,

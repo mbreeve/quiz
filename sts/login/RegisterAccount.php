@@ -82,15 +82,29 @@ class RegisterAccount extends Page
 
 		// Add the user to the setter table. This will change, since not all users will
 		// automatically be teachers (setters) ...
-		$idUser = $dbx->lastInsertId();
+		$idSetter = $dbx->lastInsertId();
 		$sql = 
-			"INSERT INTO setter (idUser) " .
-			"VALUES (:idUser);";
+			"INSERT INTO setter (idSetter, setterName) " .
+			"VALUES (:idSetter, :setterName);";
 		$stmt = $dbx->prepare($sql);
 		$stmt->execute(array(
-			":idUser" => $idUser,
+			":idSetter" => $idSetter,
+			":setterName" => $emailAddr,
 		));
 
+/*
+		// Add the user to the setter table. This will change, since not all users will
+		// automatically be teachers (setters) ...
+		$idSetter = $dbx->lastInsertId();
+		$setterName = $emailAddr;
+		$sql =
+			"INSERT INTO setter (idSetter, setterName) " .
+			"VALUES (:idSetter);";
+		$stmt = $dbx->prepare($sql);
+		$stmt->execute(array(
+			":idSetter" => $idSetter,
+		));
+*/
 		
 		// Everything is ok past this point. There is therefore no form to correct.
 		State::closeForm();

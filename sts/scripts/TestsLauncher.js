@@ -55,17 +55,18 @@ function TestsLauncher()
 	{
 		if (response.success)
 		{
-			switch (response.db.request)
+			//switch (response.request)
+			switch (response.method)
 			{
 			case "getFixedData":
 				if (!this.testsRoot)
 				{
-					this.testsRoot = new TestsRoot(this, response.db);
+					this.testsRoot = new TestsRoot(this, response);
 					this.testsRoot.enter();
 				}
 				return true;
 			default:
-				return this.testsRoot ? this.testsRoot.dispatch(response.db) : false;
+				return this.testsRoot ? this.testsRoot.dispatch(response) : false;
 			}
 		}
 		return false;

@@ -19,8 +19,8 @@ class QuestionsManager
 
 		// Return questions along with answers ...
 		return array(
-			"request" => "readQuestions",
-			"idTest" => $this->idTest,
+			//"request" => "readQuestions",
+			//"idTest" => $this->idTest,
 			"questions" => $this->questions,
 		);
 	}
@@ -36,7 +36,7 @@ class QuestionsManager
 		$this->createAnswerRecord();
 		$this->createTestQuestionRecord();
 		return array(
-			"request" => "createQuestion",
+			//"request" => "createQuestion",
 			"idTest" => $this->idTest,
 			"idQuestion" => $this->idQuestion,
 		);
@@ -51,7 +51,7 @@ class QuestionsManager
 		// Do the database updates ...
 		$this->updateQuestionRecord();
 		return array(
-			"request" => "updateQuestion",
+			//"request" => "updateQuestion",
 			"idQuestion" => $this->idQuestion,
 		);
 	}

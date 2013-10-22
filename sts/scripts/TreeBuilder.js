@@ -4,7 +4,7 @@
 // Project: STS - Specialised Test Setter
 //
 
-function makeTestData(from)
+function makeTestFields(from)
 {
 	// The default object, used when there is no source object ...
 	var obj =
@@ -54,83 +54,86 @@ function TreeBuilder(parent)
 	// This is the response to ajax calls, i.e. asynchronously to everything else.
 	this.dispatch = function(response)
 	{
-		if (response.database)
+		var obj = this;
+		$.each(response.database, function()
 		{
-			this.copyKeywords(response.database.keywords);		// copy across the keywords
-			this.copyTests(response.database.tests);          // copy across the tests
-			this.getTreeViewer().updateTests();
-		}
-		switch (response.request)
+			switch (this.table)
+			{
+			case "setter":
+				obj.copySetters(this);
+				break;
+			case "keyword":
+				obj.copyKeywords(this);
+				break;
+			case "test":
+				obj.copyTests(this);
+				break;
+			case "question":
+				obj.copyQuestions(this);
+				break;
+			}
+		});
+		this.getTreeViewer().updateTests();
+		return this.getTreeViewer().dispatch(response);
+	}
+
+	// Copy across the setter(s): normally expect one!
+	this.copySetters = function(setters)
+	{
+		var root = this.root;
+		var oldSetters = root.setters;
+		oldSetters || (oldSetters = { });
+		root.setters = { };
+		$.each(setters.records, function()
 		{
-		case "setSetter":
-			return true;
-		default:
-			return this.getTreeViewer().dispatch(response);
-		}
+			var setter;
+			var idSetter = "S-" + this.idSetter;
+			(setter = oldSetters[idSetter]) || (setter =
+			{
+				fields: { },
+				keywords: { },
+				tests: { }
+			});
+			setter.fields = { name: this.setterName };
+			root.setters[idSetter] = setter;
+		});
 	}
 
 	// Copy across the keywords
 	this.copyKeywords = function(keywords)
 	{
-		if (keywords)
+		var idSetter = "S-" + keywords.pid;
+		var setter = this.root.setters[idSetter];
+		setter.keywords = { };
+		$.each(keywords.records, function(lc, keyword)
 		{
-			var root = this.root;
-			root.allKeywords = { };
-			$.each(keywords, function(lc, keyword)
-			{
-				root.allKeywords[lc] = keyword;
-			});
-		}
+			setter.keywords[lc] = keyword;
+		});
 	}
 
 	// Copy across the tests
 	this.copyTests = function(tests)
 	{
-		if (tests)
+		var root = this.root;
+		var idSetter = "S-" + tests.pid;
+
+		root.setters || (root.setters = { });
+		root.setters[idSetter] || (root.setters[idSetter] = { });
+		var setters = root.setters;
+		var oldTests = setters[idSetter].tests;
+		oldTests || (oldTests = { });
+		setters[idSetter].tests = { };
+		$.each(tests.records, function()
 		{
-			var oldObjects = this.root.objects;
-			var newObjects = { };
-	
-			var dbid = "T-Before";
-			newObjects[dbid] =
+			var test;
+			var idTest = "T-" + this.idTest;
+			(test = oldTests[idTest]) || (test =
 			{
-				type: "test",
-				position: "before",
-				dbid: dbid
-			};
-	
-			$.each(tests, function()
-			{
-				var dbid = "T-" + this.idTest;
-				var object;
-				if (oldObjects && oldObjects[dbid])
-				{
-					object = oldObjects[dbid];
-					object.rowData = object.$row.data();
-					object.classes = object.$row.attr("class");
-				}
-				else
-				{
-					object =
-					{
-						type: "test",
-						position: "item",
-						dbid: dbid
-					};
-				}
-				object.db = makeTestData({ source: this });
-				newObjects[dbid] = object;
+				fields: { },
+				questions: { }
 			});
-	
-			var dbid = "T-After";
-			newObjects[dbid] =
-			{
-				type: "test",
-				position: "after",
-				dbid: dbid
-			};
-	
-			this.root.objects = newObjects;
-		}
+			test.fields = makeTestFields({ source: this });
+			setters[idSetter].tests[idTest] = test;
+		});
 	}
 }

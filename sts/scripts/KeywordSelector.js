@@ -44,11 +44,12 @@ function KeywordSelector(parent)
 	};
 
 	// Enter this from the calling (parent) browser/editor
-	this.enter = function(data)
+	this.enter = function(setter, test)
 	{
 		this.root.whiteBoard.setGreeting("Select Keywords");
-		this.original = makeTestData({ source: data });
-		this.current = makeTestData({ source: data });
+		this.setter = setter;
+		this.original = makeTestFields({ source: test });
+		this.current = makeTestFields({ source: test });
 		this.showCboxes();
 		this.$divOuter.show();
 		this.showOptions();
@@ -90,27 +91,22 @@ function KeywordSelector(parent)
 	// produce a new set of checkboxes.
 	this.showCboxes = function()
 	{
-		var keywords = this.current.keywords;
-		var allKeywords = this.root.allKeywords;
-
-		// The $.extend() merges together all checked keywords, including new ones,
-		// to the names in allKeywords (the original set).
+		// The $.extend() merges together all current.keywords, including new ones,
+		// to the names in setter.keywords (the original set).
 		var newKeywords = { };
-		$.extend(newKeywords, allKeywords, keywords);
+		$.extend(newKeywords, this.setter.keywords, this.current.keywords);
 
 		var $curRow = $("<ul></ul>");
 		this.$cboxes.empty().append($curRow);
 		var thisObj = this;
 		var count = 0;
+		var keywords = this.current.keywords;
 		$.each(newKeywords, function(key, name)
 		{
 			$curRow.append(
 				$("<li class='keyword'></li>").append(
-					$("<input type='checkbox' class='cbox' />")
-						.prop("checked", keywords[key]),
-					$("<input type='text' class='kwinput' />")
-						.val(name)
-						.prop("disabled", true)));
+					$("<input type='checkbox' class='cbox' />").prop("checked", keywords[key]),
+					$("<input type='text' class='kwinput' />").val(name).prop("disabled", true)));
 			if (++count % 4 == 0)
 			{
 				$curRow = $("<ul></ul>");
@@ -139,7 +135,7 @@ function KeywordSelector(parent)
 	this.deriveKeywords = function()
 	{
 		var keywords = { };
-		var allKeywords = this.root.allKeywords;
+		var allKeywords = this.setter.keywords;
 
 		this.$cboxes.find("li").each(function()
 		{

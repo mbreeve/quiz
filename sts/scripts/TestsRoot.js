@@ -20,10 +20,10 @@ function TestsRoot(parent, data)
 		this.launch.postAjax(
 		{
 			class: "TestsManager",
-			method: "setSetter",
+			method: "loginSetter",
 			args:
 			{
-				idSetter: this.idSetter
+				idLogged: this.idSetter
 			}
 		});
 	}

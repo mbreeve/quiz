@@ -52,9 +52,10 @@ class EmptyDatabase extends Page
 			"INSERT INTO user (emailAddr, password, firstName, lastName, level, added) " .
 			"VALUES (:emailAddr, :password, :firstName, :lastName, :level, now());";
 		$stmt = $dbx->prepare($sql);
+
 		$xsql =
-			"INSERT INTO setter (idUser) " .
-			"VALUES (:idUser);";
+			"INSERT INTO setter (idSetter, setterName) " .
+			"VALUES (:idSetter, :setterName);";
 		$xstmt = $dbx->prepare($xsql);
 
 		// Get the users from the preset array ...
@@ -76,9 +77,10 @@ class EmptyDatabase extends Page
 				":level" => $level,
 			));
 
-			$idUser = $dbx->lastInsertId();
+			$idSetter = $dbx->lastInsertId();
 			$xstmt->execute(array(
-				":idUser" => $idUser,
+				":idSetter" => $idSetter,
+				":setterName" => $ea,
 			));
 		}
 
