@@ -19,14 +19,22 @@ function QuestionEditor(parent)
 				$("<tbody></tbody>").append(
 					$("<tr></tr>").append(
 						$("<td class='labels'></td>").append(
-							$("<label for='name'>Question</label>")),
+							$("<label for='ident'>Identification</label>")),
+						$("<td class='inputs'></td>").append(
+							this.$ident = $("<input autofocus size='80' />")
+								.attr("placeholder", "A unique identifier"))),
+					$("<tr></tr>").append(
+						$("<td class='labels'></td>").append(
+							$("<label for='ident'>Question</label>")),
 						$("<td></td>").append(
-							this.$query = $("<input class='inputs' size='80' />"))),
+							this.$query = $("<input class='inputs' size='80' />")
+								.attr("placeholder", "The question"))),
 					$("<tr></tr>").append(
 						$("<td class='labels'></td>").append(
 							$("<label for='descr'>Answer</label></td>")),
 						$("<td></td>").append(
-							this.$reply = $("<input class='inputs' size='80' />")))))));
+							this.$reply = $("<input class='inputs' size='80' />")
+								.attr("placeholder", "The answer")))))));
 
 	var thisObj = this;
 	this.$divOuter.on("keyup", ".inputs", function()
@@ -35,52 +43,72 @@ function QuestionEditor(parent)
 		thisObj.lookForChanges();
 	});
 
-	// This is the response to ajax calls, i.e. asynchronously to everything else.
-	this.dispatch = function(data)
+	this.syncDisplay = function(fromScreen)
 	{
-		//switch (data.request)
-		switch (data.method)
+		if (fromScreen)		// syncDisplay(true)
 		{
-		case "createQuestion":
-		case "updateQuestion":
-			return true;
-		default:
-			return false;
+			this.question.fields.ident = this.$ident.val();
+			this.question.fields.query = this.$query.val();
+			this.question.fields.reply = this.$reply.val();
 		}
-	}
-
-	this.select = function(question)
-	{
-		this.original = makeQuestionData({ source: question });
-		this.current = makeQuestionData({ source: question });
-		this.creating = (question.idTest == 0);
-		this.syncDisplay();
-		return this;
-	}
-
-	this.syncDisplay = function(toNotFromData)
-	{
-		if (toNotFromData)
+		else							// syncDisplay(false)
 		{
-			this.current.query = this.$query.val();
-			this.current.reply = this.$reply.val();
-		}
-		else
-		{
-			this.$query.val(this.current.query);
-			this.$reply.val(this.current.reply);
+			this.$ident.val(this.question.fields.ident);
+			this.$query.val(this.question.fields.query);
+			this.$reply.val(this.question.fields.reply);
 		}
 		return this;
 	};
 
-	// Enter this from the calling (parent) browser/editor
-	this.enter = function()
+	// Create a new question within the given test.
+	this.create = function(question, idTest)
 	{
-		this.root.whiteBoard.setGreeting("View/Edit Question");
+		this.creating = true;
+		this.idTest = idTest;
+		this.question = question;
+		var greeting = "Create Question";
+		this.edit();
+	};
+
+	// Update a question.
+	this.update = function(question, idTest)
+	{
+		this.creating = false;
+		this.idTest = idTest;
+		this.question = question;
+		this.greeting = "Update Question";
+		this.edit();
+	};
+
+	// Common part of update() & create().
+	this.edit = function()
+	{
+		this.question.original = $.extend(true, { }, this.question.fields);
+		this.idQuestion = this.question.dbid;
+		this.syncDisplay(false);
+		this.root.whiteBoard.setGreeting(this.greeting);
 		this.$divOuter.show();
 		this.showOptions();
 		return this;
-	}
+	};
+
+	this.delete = function(question)
+	{
+		if (confirm("Do you want to delete " + question.fields.ident + "?"))
+		{
+			this.launch.postAjax(
+			{
+				class: "TestsManager",
+				method: "deleteQuestion",
+				args:
+				{
+					idQuestion: question.dbid
+				}
+			});
+		}
+		this.finish().parent.resume();
+		return this;
+	};
 
 	// Finish this and return to the calling (parent) browser/editor
 	this.finish = function()
@@ -96,43 +124,34 @@ function QuestionEditor(parent)
 	{
 		var thisObj = this;
 		this.menu.clearItems();
-
-		this.idSave = this.menu.addItem("Save", false, function()
+		var ident = this.creating ? " New Question" : " <" + this.question.fields.ident + ">";
+		this.idSave = this.menu.addItem("Save" + ident, false, function()
 		{
-			thisObj.save();
+			thisObj.save().finish().parent.resume();
 		});
 		this.idAbandon = this.menu.addItem("Abandon", false, function()
 		{
-			thisObj.abandon();
+			thisObj.abandon().finish().parent.resume();
 		});
-		this.idDelete = this.creating ? 0 : this.menu.addItem("Delete", true, function()
-		{
-			thisObj.delete();
-		});
-		this.idEndQuestions = this.menu.addItem("Finish Questions", true, function()
+		this.idList = this.menu.addItem("Back to <List Questions>", true, function()
 		{
 			thisObj.finish().parent.resume();
 		});
-
 		this.menu.show();
 		return this;
 	};
 
 	this.lookForChanges = function()
 	{
-		var enable =
-			this.current.query.length > 0 &&
-			this.current.reply.length > 0 &&
-			(this.original.query != this.current.query ||
-			this.original.reply != this.current.reply);
+		var enable = this.question.fields.ident.length > 0 &&
+			(this.creating ||
+			this.question.original.ident != this.question.fields.ident ||
+			this.question.original.query != this.question.fields.query ||
+			this.question.original.reply != this.question.fields.reply);
 
 		this.menu.enableItem(this.idSave, enable);
 		this.menu.enableItem(this.idAbandon, enable);
-		if (this.idDelete > 0)
-		{
-			this.menu.enableItem(this.idDelete, !enable);
-		}
-		this.menu.enableItem(this.idEndQuestions, !enable);
+		this.menu.enableItem(this.idList, !enable);
 		return this;
 	};
 
@@ -148,18 +167,29 @@ function QuestionEditor(parent)
 	{
 		this.launch.postAjax(
 		{
-			class: "QuestionsManager",
-			method: thisObj.creating ? "createQuestion" : "updateQuestion",
+			class: "TestsManager",
+			method: this.creating ? "createQuestion" : "updateQuestion",
 			args:
 			{
-				idTest: this.current.idTest,
-				query: this.current.query,
-				reply: this.current.reply
+				idSetter: this.question.path.setter,
+				idTest: this.idTest,
+				idQuestion: this.question.dbid,
+				ident: this.question.fields.ident,
+				query: this.question.fields.query,
+				reply: this.question.fields.reply
 			}
 		});
-
-		this.original = makeQuestionData({ source: this.current });
-		this.lookForChanges();
+		if (this.creating)
+		{
+			$.extend(true, this.question.fields, this.question.original);
+			this.creating = false;
+		}
+		else
+		{
+			this.question.original = { };
+			$.extend(true, this.question.original, this.question.fields);
+			this.lookForChanges();
+		}
 		return this;
 	};
 }

@@ -12,10 +12,10 @@ class DatabaseStructure
 		(
 			"answer" => "",
 			"keyword" => "",
+			"test_question" => "",
 			"question" => "",
 			"test_key" => "",
 			"test" => "",
-			"test_question" => "",
 			"setter" => "",
 			"user" => "",
 			
@@ -31,66 +31,67 @@ class DatabaseStructure
 		return array
 		(
 		"answer" => "
-		  `idQuestion` int(10) unsigned NOT NULL,
-		  `reply` varchar(40) NOT NULL COMMENT 'the answer/option text',
-		  `optNum` tinyint(3) NOT NULL DEFAULT '0' COMMENT 'used for multichoice questions',
-		  PRIMARY KEY (`idQuestion`)
+  `idQuestion` int(10) unsigned NOT NULL,
+  `reply` tinytext NOT NULL COMMENT 'the answer/option text',
+  `optNum` tinyint(3) NOT NULL DEFAULT '0' COMMENT 'used for multichoice questions',
+  PRIMARY KEY (`idQuestion`)
 		",
 
 		"keyword" => "
-		  `idSetter` int(10) unsigned NOT NULL,
-		  `indexSetter` tinyint(3) unsigned NOT NULL,
-		  `theWord` varchar(20) NOT NULL,
-		  PRIMARY KEY (`idSetter`,`indexSetter`)
+  `idSetter` int(10) unsigned NOT NULL,
+  `indexSetter` tinyint(3) unsigned NOT NULL,
+  `theWord` varchar(20) NOT NULL,
+  PRIMARY KEY (`idSetter`,`indexSetter`)
 		",
 
 		"question" => "
-		  `idQuestion` int(10) unsigned NOT NULL AUTO_INCREMENT,
-		  `query` varchar(40) NOT NULL COMMENT 'the question text',
-		  `correct` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'correct option for multiple choice',
-		  PRIMARY KEY (`idQuestion`)
+  `idQuestion` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `identifier` varchar(80) NOT NULL COMMENT 'name as it appears in the treetable',
+  `query` tinytext NOT NULL COMMENT 'the question text',
+  `correct` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'correct option for multiple choice',
+  PRIMARY KEY (`idQuestion`)
 		",
 
 		"setter" => "
-		  `idSetter` int(10) unsigned NOT NULL,
-		  `setterName` varchar(80) NOT NULL,
-		  PRIMARY KEY (`idSetter`)
+  `idSetter` int(10) unsigned NOT NULL,
+  `identifier` varchar(80) NOT NULL COMMENT 'name as it appears in the treetable',
+  PRIMARY KEY (`idSetter`)
 		",
 
 		"test" => "
-		  `idTest` int(10) unsigned NOT NULL AUTO_INCREMENT,
-		  `idSetter` int(10) unsigned NOT NULL,
-		  `name` varchar(80) NOT NULL,
-		  `descr` varchar(80) DEFAULT NULL,
-		  `added` datetime NOT NULL,
-		  PRIMARY KEY (`idTest`),
-		  UNIQUE KEY `Setter` (`idSetter`,`name`)
+  `idTest` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `idSetter` int(10) unsigned NOT NULL,
+  `identifier` varchar(80) NOT NULL COMMENT 'name as it appears in the treetable',
+  `descr` tinytext,
+  `added` datetime NOT NULL,
+  PRIMARY KEY (`idTest`),
+  UNIQUE KEY `Setter` (`idSetter`,`identifier`)
 		",
 
 		"test_key" => "
-		  `idTest` int(10) unsigned NOT NULL,
-		  `indexSetter` tinyint(3) unsigned NOT NULL,
-		  UNIQUE KEY `Test` (`idTest`,`indexSetter`)
+  `idTest` int(10) unsigned NOT NULL,
+  `indexSetter` tinyint(3) unsigned NOT NULL,
+  UNIQUE KEY `Test` (`idTest`,`indexSetter`)
 		",
 
 		"test_question" => "
-		  `idQuestion` int(10) unsigned NOT NULL,
-		  `idTest` int(10) unsigned NOT NULL,
-		  `sequence` double NOT NULL DEFAULT '0' COMMENT 'order questions in order',
-		  PRIMARY KEY (`idQuestion`,`idTest`)
+  `idQuestion` int(10) unsigned NOT NULL,
+  `idTest` int(10) unsigned NOT NULL,
+  `sequence` double NOT NULL COMMENT 'order of questions within test',
+  PRIMARY KEY (`idQuestion`,`idTest`)
 		",
 
 		"user" => "
-		  `idUser` int(10) unsigned NOT NULL AUTO_INCREMENT,
-		  `firstName` varchar(20) NOT NULL,
-		  `lastName` varchar(40) NOT NULL,
-		  `password` varchar(40) NOT NULL,
-		  `emailAddr` varchar(80) NOT NULL,
-		  `level` tinyint(3) unsigned NOT NULL DEFAULT '2',
-		  `actCode` char(32) DEFAULT NULL,
-		  `added` datetime NOT NULL,
-		  PRIMARY KEY (`idUser`),
-		  KEY `login` (`emailAddr`,`password`)
+  `idUser` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `firstName` varchar(20) NOT NULL,
+  `lastName` varchar(40) NOT NULL,
+  `password` varchar(40) NOT NULL,
+  `emailAddr` varchar(80) NOT NULL,
+  `level` tinyint(3) unsigned NOT NULL DEFAULT '2',
+  `actCode` char(32) DEFAULT NULL,
+  `added` datetime NOT NULL,
+  PRIMARY KEY (`idUser`),
+  KEY `login` (`emailAddr`,`password`)
 		",
 		);
 	}
@@ -99,18 +100,31 @@ class DatabaseStructure
 	{
 		return array
 		(
-		"keyword" => "
-		  (`idSetter`) REFERENCES `setter` (`idSetter`) ON DELETE CASCADE
-		",
-		"setter" => "
-		  (`idSetter`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
-		",
-		"test" => "
-		  (`idSetter`) REFERENCES `setter` (`idSetter`) ON DELETE CASCADE
-		",
-		"test_key" => "
-		  (`idTest`) REFERENCES `test` (`idTest`) ON DELETE CASCADE
-		",
+			"answer" => array
+			(
+				"(`idQuestion`) REFERENCES `question` (`idQuestion`) ON DELETE CASCADE",
+			),
+			"keyword" => array
+			(
+				"(`idSetter`) REFERENCES `setter` (`idSetter`) ON DELETE CASCADE",
+			),
+			"setter" => array
+			(
+				"(`idSetter`) REFERENCES `user` (`idUser`) ON DELETE CASCADE",
+			),
+			"test" => array
+			(
+				"(`idSetter`) REFERENCES `setter` (`idSetter`) ON DELETE CASCADE",
+			),
+			"test_key" => array
+			(
+				"(`idTest`) REFERENCES `test` (`idTest`) ON DELETE CASCADE",
+			),
+			"test_question" => array
+			(
+ 				"(`idTest`) REFERENCES `test` (`idTest`) ON DELETE CASCADE",
+ 				"(`idQuestion`) REFERENCES `question` (`idQuestion`) ON DELETE CASCADE",
+ 			),
 		);
 	}
 

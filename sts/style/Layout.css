@@ -70,25 +70,24 @@ td
 	background: white;
 }
 
-.testName
+.identifier
 {
 	width: 35%;
 }
 
-.testDate
+.justDate
 {
-	width: 15%;
+	width: 17%;
 }
 
 .keywords
 {
-	width: 50%;
+	width: 48%;
 }
 
 .labels
 {
 	width: 100px;
-	//min-width: 100px;
 }
 
 .stand

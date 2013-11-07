@@ -39,8 +39,6 @@ END_HTML;
 <script src='$scripts/TreeBuilder.js'></script>
 <script src='$scripts/TreeViewer.js'></script>
 <script src='$scripts/TestEditor.js'></script>
-<script src='$scripts/KeywordSelector.js'></script>
-<script src='$scripts/QuestionsLister.js'></script>
 <script src='$scripts/QuestionEditor.js'></script>
 </div>
 END_HTML;

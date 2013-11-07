@@ -37,13 +37,16 @@ class EmptyDatabase extends Page
 
 		$tables = DatabaseStructure::getConstraints();
 		$index = 0;
-		foreach ($tables as $table => $constraint)
+		foreach ($tables as $table => $constraints)
 		{
-			$name = $table . "_ibfk_" . ++$index;
-			//++$index;
-			$sql = "ALTER TABLE $table ADD CONSTRAINT `$name` FOREIGN KEY $constraint;";
-			$stmt = $dbx->prepare($sql);
-			$stmt->execute();
+			foreach ($constraints as $constraint)
+			{
+				$name = $table . "_ibfk_" . ++$index;
+				//++$index;
+				$sql = "ALTER TABLE $table ADD CONSTRAINT `$name` FOREIGN KEY $constraint;";
+				$stmt = $dbx->prepare($sql);
+				$stmt->execute();
+			}
 		}
 
 		// Insert special users into the user table. The same SQL statement does for
@@ -54,8 +57,8 @@ class EmptyDatabase extends Page
 		$stmt = $dbx->prepare($sql);
 
 		$xsql =
-			"INSERT INTO setter (idSetter, setterName) " .
-			"VALUES (:idSetter, :setterName);";
+			"INSERT INTO setter (idSetter, identifier) " .
+			"VALUES (:idSetter, :identifier);";
 		$xstmt = $dbx->prepare($xsql);
 
 		// Get the users from the preset array ...
@@ -80,7 +83,7 @@ class EmptyDatabase extends Page
 			$idSetter = $dbx->lastInsertId();
 			$xstmt->execute(array(
 				":idSetter" => $idSetter,
-				":setterName" => $ea,
+				":identifier" => $ea,
 			));
 		}
 

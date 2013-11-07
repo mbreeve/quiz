@@ -20,7 +20,7 @@ function TestsLauncher()
 				{
 					class: this.class,
 					method: this.method,
-					args: this.args,
+					args: this.args
 				});
 			}
 		});
@@ -55,7 +55,6 @@ function TestsLauncher()
 	{
 		if (response.success)
 		{
-			//switch (response.request)
 			switch (response.method)
 			{
 			case "getFixedData":

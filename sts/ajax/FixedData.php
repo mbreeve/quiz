@@ -16,10 +16,10 @@ class FixedData
 			"divMenu" => "divMenu",
 		);
 
-		// Get the setter data from the login state ...
-		$setter = array
+		// Get the logged-on data from the login state ...
+		$logged = array
 		(
-			"idSetter" => StateLogin::getInstance()->idUser,
+			"idLogged" => StateLogin::getInstance()->idUser,
 			"level" => StateLogin::getInstance()->level,
 		);
 
@@ -32,9 +32,8 @@ class FixedData
 
 		// Put them all together for json
 		return array(
-			//"request" => "getFixedData",
 			"html" => $html,
-			"setter" => $setter,
+			"logged" => $logged,
 			"mods" => $mods,
 		);
 	}

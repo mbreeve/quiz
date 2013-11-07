@@ -11,9 +11,6 @@ function TreeViewer(parent)
 	this.launch = this.root.launch;
 	this.setup = false;
 
-	this.viewing = null;
-	this.curIndex = 0;
-	this.ttid = 0;
 	this.menu = new MainMenu(this.root, "treeViewer");
 	this.menu.setFixed();
 	this.menu.hide();
@@ -26,16 +23,6 @@ function TreeViewer(parent)
 		lister.selectRow($(this));
 	});
 
-	// Get the questions displayer, creating if necessary ...
-	this.getQuestionsLister = function()
-	{
-		if (!this.questionsLister)
-		{
-			this.questionsLister = new QuestionsLister(this);
-		}
-		return this.questionsLister;
-	};
-
 	// Get the test editor, creating if necessary
 	this.getTestEditor = function()
 	{
@@ -43,13 +30,25 @@ function TreeViewer(parent)
 		{
 			this.testEditor = new TestEditor(this);
 		}
+		this.viewing = this.testEditor;
 		return this.testEditor;
+	};
+
+	// Get the question editor, creating if necessary
+	this.getQuestionEditor = function()
+	{
+		if (!this.questionEditor)
+		{
+			this.questionEditor = new QuestionEditor(this);
+		}
+		this.viewing = this.questionEditor;
+		return this.questionEditor;
 	};
 
 	// This is the response to ajax calls, i.e. asynchronously to everything else.
 	this.dispatch = function(data)
 	{
-		return this.getTestEditor().dispatch(data);
+		return true;
 	}
 
 	// Finish this and return to the calling (parent) browser/editor
@@ -65,7 +64,6 @@ function TreeViewer(parent)
 	{
 		this.$divOuter.show();
 		this.menu.show();
-		this.root.whiteBoard.setGreeting("Display All Tests");
 		this.viewing = this;
 		this.expandNodes(false);
 		return this;
@@ -81,98 +79,128 @@ function TreeViewer(parent)
 	};
 
 	// Update the view of the tests.
-	this.updateTests = function()
+	this.updateTree = function()
 	{
-		this.displayAll();
-		if (!this.viewing || this.viewing == this)
+		this.buildTree();
+		this.selectCurRow();
+		if (!this.viewing)
 		{
-			this.selectCurRow();
+			this.root.whiteBoard.setGreeting("Display All Tests");
 			this.resume();
 		}
 		return this;
 	}
 
-	this.displayAll = function()
+	this.buildTree = function()
 	{
-		var $table, $tbody, $row;
-
+		var $tbody, $row, ttidDefault;
 		this.$divOuter.empty().append(
-			$table = $("<table id='tableLister' class='stand'></table>").append(
+			this.$table = $("<table id='tableLister' class='stand'></table>").append(
 				$("<thead></thead>").append(
 					$("<tr></tr>").append(
-						$("<th></th>").addClass("itemName").text("Name"),
-						$("<th></th>").addClass("testDate").text("Date Added"),
+						$("<th></th>").addClass("identifier").text("Name"),
+						$("<th></th>").addClass("justDate").text("Date Added"),
 						$("<th></th>").addClass("keywords").text("Keywords"))),
 				$tbody = $("<tbody></tbody>")));
 
-		$.each(this.root.setters, function(idSetter, setter)
+		var root = this.root;
+		$.each(root.logged.idSetters, function()
 		{
-			$tbody.append(
-				$row = $("<tr></tr>").addClass("selectable").append(
-					$("<td></td>").addClass("itemName").text("Create Test"),
-					$("<td></td>").addClass("testDate"),
-					$("<td></td>").addClass("keywords")));
-			$row.data(
+			var idSetter = this;
+			var setter = root.setters[idSetter];
+			var eidSetter = "S" + idSetter;
+			$.each(setter.idTests, function()
 			{
-				ttid: "T-Before",
-				setter: setter,
-				action: "newTest"
-			});
-
-			$.each(setter.tests, function(idTest, test)
-			{
+				var idTest = this;
+				var test = root.tests[idTest];
+				var eidTest = "T" + idTest;
+				var isReal = idTest != 0;
+				var $ident;
 				$tbody.append(
 					$row = $("<tr></tr>").addClass("selectable").append(
-						$("<td></td>").addClass("itemName").text(test.fields.name).prepend(
-							$("<span></span>").addClass("test")),
-						$("<td></td>").addClass("testDate").text(test.fields.added),
+						$ident = $("<td></td>").addClass("identifier").text(idTest + ":" + test.fields.ident),
+						$("<td></td>").addClass("justDate").text(test.fields.added),
 						$("<td></td>").addClass("keywords").text(test.fields.kwText)));
 				$row.data(
 				{
-					ttid: idTest,
+					//pid: eidSetter;
+					ttid: eidSetter + eidTest,
 					setter: setter,
+					idSetter: idSetter,					// this has to be separate
 					test: test,
-					action: "test",
-					branch: true
+					table: "test",
+					branch: isReal
 				});
+				if (!isReal)
+				{
+					$ident.text("Create Test");
+					// This (first time through) is the default selected row (i.e. the "path") ...
+					ttidDefault || (ttidDefault = eidSetter + eidTest);
+					return true;			// c.f. continue (not break) in normal loop
+				}
+				$ident.prepend($("<span></span>").addClass("test"));
 				if (test.$row && test.$row.hasClass("expanded"))
 				{
-					$row.addClass("xxx");
+					$row.addClass("expand");
 				}
 				// Keep the record reference against the row in a reasonably enduring way.
-				setter.tests[idTest].$row = $row;
+				root.tests[idTest].$row = $row;
 
-				$tbody.append(
-					$row = $("<tr></tr>").addClass("selectable").append(
-						$("<td></td>").addClass("itemName").text("Create Question"),
-						$("<td></td>").addClass("testDate"),
-						$("<td></td>").addClass("keywords")));
-				$row.data(
+				$.each(test.idQuestions, function()
 				{
-					pid: idTest,
-					ttid: "Q-After",
-					action: "newQuestion"
-				});
-/*
-				case "question record":
-					var question = test.db;
+					var idQuestion = this;
+					var question = root.questions[idQuestion];
+					var eidQuestion = "Q" + idQuestion;
+					var isReal = idQuestion != 0;
+					var $ident;
 					$tbody.append(
-						$row.append(
-							$("<td></td>").addClass("questionName").text("question.name").prepend(
-								$("<span></span>").addClass("question"))));
-					break;
-*/
+						$row = $("<tr></tr>").addClass("selectable").append(
+							$ident = $("<td></td>").addClass("identifier").text(idQuestion + ":" + question.fields.ident),
+							$("<td></td>").addClass("justDate"),
+							$("<td></td>").addClass("keywords")));
+					$row.data(
+					{
+						pid: eidSetter + eidTest,
+						ttid: eidSetter + eidTest + eidQuestion,
+						idTest: idTest,					// this has to be separate
+						question: question,
+						table: "question"
+					});
+					if (!isReal)
+					{
+						$ident.text("Create Question");
+						return true;			// c.f. continue (not break) in normal loop
+					}
+					$ident.prepend($("<span></span>").addClass("question"));
+					if (question.$row && question.$row.hasClass("expanded"))
+					{
+						$row.addClass("expand");
+					}
+					// Keep the record reference against the row in a reasonably enduring way.
+					root.questions[idQuestion].$row = $row;
+				});
 			});
 		});
-		this.$expandeds = $tbody.children(".xxx");
-		$table.treetable(
+
+		// Remember the default. Also, if no row has been selected, use the default ...
+		this.ttidDefault = ttidDefault;
+		this.ttidCurrent || (this.ttidCurrent = ttidDefault);
+		
+		// Mark each selectable HTML line with its id/path
+		var $rows = $tbody.children();
+		$rows.each(function()
+		{
+			var $this = $(this);
+			$this.attr("id", $this.data("ttid"));
+		});
+		this.$expandeds = $rows.filter(".expand");
+		this.$table.treetable(
 		{
 			branchAttr: "branch",
 			expandable: true,
 			nodeIdAttr: "ttid",
 			parentIdAttr: "pid"
 		});
-		this.$table = $table;
 		this.expandNodes(true);
 	};
 
@@ -187,10 +215,14 @@ function TreeViewer(parent)
 		var maxRow = $rows.length - 1;
 		if (maxRow >= 0)
 		{
-			var $row = $rows.filter("#" + this.ttid);
+			var selector = "#" + this.ttidCurrent;
+			var $row = $rows.filter(selector);
 			if ($row.length == 0)
 			{
-				$row = $rows.eq(Math.min(Math.max(this.curIndex, 0), maxRow));
+				// If the currently selected row has disappeared, whittle the path down
+				// until one is found.
+				selector = "#" + this.ttidDefault;
+				$row = $rows.filter(selector);
 			}
 			if ($row.length > 0)
 			{
@@ -203,60 +235,63 @@ function TreeViewer(parent)
 	this.selectRow = function($row)
 	{
 		$row.addClass("selected").siblings().removeClass("selected");
-		this.$row = $row;
-		this.curIndex = $row.index();
-		var ttid = this.ttid = $row.data("ttid");
-		var setter = { };
-		var test = { };
-		var create = false;
-		switch ($row.data("action"))
-		{
-		case "newTest":
-			create = true;
-			setter = $row.data("setter");
-			test.fields = makeTestFields({ });
-			break;
-		case "test":
-			setter = $row.data("setter");
-			test = $row.data("test");
-			break;
-		}
+		this.ttidCurrent = $row.data("ttid");
 
 		this.menu.clearItems();
 		var thisObj = this;
-		var te = this.getTestEditor();
-		if (test.fields)
+		switch ($row.data("table"))
 		{
-			this.getTestEditor().select(setter, test.fields);
-			var name = " <" + test.fields.name + ">";
-			if (create)
+		case "test":
+			var setter = $row.data("setter");
+			var test = $row.data("test");
+			var ident = " <" + test.fields.ident + ">";
+			if (parseInt(test.dbid))
 			{
-				this.menu.addItem("Create New Test", true, function()
+				this.menu.addItem("View/Edit" + ident, true, function()
 				{
-					thisObj.viewing = te;
-					thisObj.suspend().getTestEditor().enter();
+					thisObj.suspend().getTestEditor().edit(setter, test);
+				});
+				this.menu.addItem("Delete" + ident, true, function()
+				{
+					thisObj.suspend().getTestEditor().delete(setter, test);
 				});
 			}
 			else
 			{
-				this.menu.addItem("View/Edit" + name, true, function()
+				this.menu.addItem("Create New Test", true, function()
 				{
-					thisObj.viewing = te;
-					thisObj.suspend().getTestEditor().enter();
-				});
-				this.menu.addItem("Delete" + name, true, function()
-				{
-					thisObj.viewing = te;
-					thisObj.suspend().getTestEditor().delete();
+					thisObj.suspend().getTestEditor().edit(setter, test);
 				});
 			}
+			break;
+		case "question":
+			var idTest = $row.data("idTest");
+			var question = $row.data("question");
+			var ident = " <" + question.fields.ident + ">";
+			if (parseInt(question.dbid))
+			{			
+				this.menu.addItem("Update" + ident, true, function()
+				{
+					thisObj.suspend().getQuestionEditor().update(question, idTest);
+				});
+				this.menu.addItem("Delete" + ident, true, function()
+				{
+					thisObj.suspend().getQuestionEditor().delete(question);
+				});
+			}
+			else
+			{
+				this.menu.addItem("Create New Question", true, function()
+				{
+					thisObj.suspend().getQuestionEditor().create(question, idTest);
+				});
+			}
+			break;
 		}
 		this.menu.addItem("Exit Test Management", true, function()
 		{
 			thisObj.parent.launch.exitTests();
 		});
-
-		this.menu.show();
 		return this;
 	};
 

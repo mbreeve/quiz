@@ -7,11 +7,8 @@
 class TestsManager
 {
 	private $dbx;
-	private $idSetter = 0;
-	private $idTest = 0;
-	private $name = "";
+	private $ident = "";
 	private $descr = "";
-	private $keywords = array();
 	private $newWords = array();
 	private $curLinks = array();
 	private $reqLinks = array();
@@ -21,13 +18,19 @@ class TestsManager
 		$this->dbx = Connection::makeDbx(false);
 		$idLogged = $args["idLogged"];
 		$database = array();
-		$setters = $this->getSetters($idLogged);
-		$database[] = $setters;
+		$logged =  $this->readLogged($idLogged);
+		$database[] = $logged;
+		$database[] = $setters = $this->listSetters($idLogged);
 		foreach ($setters["records"] as $setter)
 		{
 			$idSetter = $setter["idSetter"];
-			$database[] = $this->getKeywords($idSetter);
-			$database[] = $this->getTests($idSetter);
+			$database[] = $this->listKeywords($idSetter);
+			$database[] = $tests = $this->listTests($idSetter);
+			foreach ($tests["records"] as $test)
+			{
+				$idTest = $test["idTest"];
+				$database[] = $this->listQuestions($idSetter, $idTest);
+			}
 		}
 		return array
 		(
@@ -38,21 +41,21 @@ class TestsManager
 	public function createTest($args)
 	{
 		$this->dbx = Connection::makeDbx(false);
-		$this->idSetter = $args["idSetter"];
-		$this->keywords = $args["keywords"];
-		$this->name = $args["name"];
+		$idSetter = $args["idSetter"];
+		$keywords = $args["keywords"];
+		$this->ident = $args["ident"];
 		$this->descr = $args["descr"];
 		// Do the research ...
-		$this->findRequired();
+		$this->findRequired($idSetter, $keywords);
 		// Do the database updates ...
-		$this->createTestRecord();
-		$this->addNewWords();
-		$this->addNewLinks();
+		$idTest = $this->createTestRecord($idSetter);
+		$this->addNewWords($idSetter);
+		$this->addNewLinks($idTest);
 
 		$database = array();
-		$idSetter = $this->idSetter;
-		$database[] = $this->getKeywords($idSetter);
-		$database[] = $this->getTests($idSetter);
+		$database[] = $this->listKeywords($idSetter);
+		$database[] = $this->listTests($idSetter);
+		$database[] = $this->listQuestions($idSetter, $idTest);
 		return array
 		(
 			"database" => $database,
@@ -62,24 +65,24 @@ class TestsManager
 	public function updateTest($args)
 	{
 		$this->dbx = Connection::makeDbx(false);
-		$this->idSetter = $args["idSetter"];
-		$this->idTest = $args["idTest"];
-		$this->keywords = $args["keywords"];
-		$this->name = $args["name"];
+		$idSetter = $args["idSetter"];
+		$idTest = $args["idTest"];
+		$keywords = $args["keywords"];
+		$this->ident = $args["ident"];
 		$this->descr = $args["descr"];
 		// Do the research ...
-		$this->findCurrent();
-		$this->findRequired();
+		$this->findCurrent($idTest);
+		$this->findRequired($idSetter, $keywords);
 		// Do the database updates ...
-		$this->addNewWords();
-		$this->removeOldLinks();
-		$this->addNewLinks();
-		$this->updateTestRecord();
+		$this->addNewWords($idSetter);
+		$this->removeOldLinks($idTest);
+		$this->addNewLinks($idTest);
+		$this->updateTestRecord($idTest);
 
 		$database = array();
-		$idSetter = $this->idSetter;
-		$database[] = $this->getKeywords($idSetter);
-		$database[] = $this->getTests($idSetter);
+		$database[] = $this->listKeywords($idSetter);
+		$database[] = $this->listTests($idSetter);
+		$database[] = $this->listQuestions($idSetter, $idTest);
 		return array
 		(
 			"database" => $database,
@@ -89,22 +92,93 @@ class TestsManager
 	public function deleteTest($args)
 	{
 		$this->dbx = Connection::makeDbx(false);
-		$this->idSetter = $args["idSetter"];
-		$this->idTest = $args["idTest"];
-		$this->deleteTestRecord();
+		$idSetter = $args["idSetter"];
+		$idTest = $args["idTest"];
+		$this->deleteTestRecord($idTest);
 
 		$database = array();
-		$database[] = $this->getTests($this->idSetter);
+		$database[] = $this->listTests($idSetter);
 		return array
 		(
 			"database" => $database,
 		);
 	}
 
-	private function getSetters($idLogged)
+	public function createQuestion($args)
+	{
+		$this->dbx = Connection::makeDbx(false);
+		// Gather arguments ...
+		$idSetter = $args["idSetter"];
+		$idTest = $args["idTest"];
+		$ident = $args["ident"];
+		$query = $args["query"];
+		$reply = $args["reply"];
+		$sequence = 1;			// temporary
+		// Create new the database records ...
+		$idQuestion = $this->createQuestionRecord($ident, $query);
+		$this->createAnswerRecord($idQuestion, $reply);
+		$this->createTestQuestionRecord($idTest, $idQuestion, $sequence);
+		// Return the updated part of the database ...
+		$database = array();
+		$database[] = $this->listQuestions($idSetter, $idTest);
+		return array
+		(
+			"database" => $database,
+		);
+	}
+
+	public function deleteQuestion($args)
+	{
+		$this->dbx = Connection::makeDbx(false);
+		$idTest = $args["idTest"];
+		$idQuestion = $args["idQuestion"];
+		$this->deleteQuestionRecord($idQuestion);
+		$database = array();
+		$database[] = array
+		(
+			"action" => "delete",
+			"table" => "question",
+			"dbid" => $idQuestion,
+			"parent" => $idTest,
+		);
+		return array
+		(
+			"database" => $database,
+		);
+	}
+
+	// Trivially does the same as listSetters. Both will be updated in the future.
+	// The hierarchy will be:
+	// 1.	the logged on user (readLogged(): this one)
+	// 2.	setters whose tests the user can edit, normally only the logged on user
+	// 3. tests set by a setter
+	// 4. questions within a test
+	// Also, at level 3, are the keywords that the setter has applied
+	private function readLogged($idLogged)
 	{
 		$sql = <<<END_SQL
-SELECT idSetter, setterName
+SELECT idSetter AS idLogged, identifier AS ident
+FROM setter
+WHERE idSetter=:idLogged
+END_SQL;
+		$stmt = $this->dbx->prepare($sql);
+		$stmt->execute(array(
+			":idLogged" => $idLogged,
+		));
+		$records = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: array();
+		return array
+		(
+			"action" => "list",
+			"table" => "logged",
+			"records" => $records,
+		);
+	}
+
+	// See comment for readLogged.
+	private function listSetters($idLogged)
+	{
+		$sql = <<<END_SQL
+SELECT idSetter, identifier AS ident
 FROM setter
 WHERE idSetter=:idSetter
 END_SQL;
@@ -117,15 +191,14 @@ END_SQL;
 		(
 			"action" => "list",
 			"table" => "setter",
-			"pid" => 0,
 			"records" => $records,
 		);
 	}
 
-	private function getTests($idSetter)
+	private function listTests($idSetter)
 	{
 		$sql = <<<END_SQL
-SELECT test.idTest AS idTest, name, descr, theWord,
+SELECT test.idTest AS idTest, identifier AS ident, descr, theWord,
 DATE_FORMAT(test.added, "%Y-%m-%d") AS added
 FROM (test
 LEFT JOIN test_key
@@ -166,12 +239,12 @@ END_SQL;
 		(
 			"action" => "list",
 			"table" => "test",
-			"pid" => $idSetter,
+			"idSetter" => $idSetter,
 			"records" => $records,
 		);
 	}
 
-	private function getKeywords($idSetter)
+	private function listKeywords($idSetter)
 	{
 		// Get all the keywords ...
 		$sql = <<<END_SQL
@@ -199,12 +272,40 @@ END_SQL;
 		(
 			"action" => "list",
 			"table" => "keyword",
-			"pid" => $idSetter,
+			"idSetter" => $idSetter,
 			"records" => $records,
 		);
 	}
 
-	private function findCurrent()
+	private function listQuestions($idSetter, $idTest)
+	{
+		$sql = <<<END_SQL
+SELECT question.idQuestion AS idQuestion, identifier AS ident,
+question.query AS query, test_question.sequence AS sequence, answer.reply AS reply
+FROM (question
+INNER JOIN test_question
+ON question.idQuestion=test_question.idQuestion)
+INNER JOIN answer
+ON question.idQuestion=answer.idQuestion
+WHERE test_question.idTest=:idTest
+END_SQL;
+		$stmt = $this->dbx->prepare($sql);
+		$stmt->execute(array(
+			":idTest" => $idTest,
+		));
+		$records = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: array();
+
+		return array
+		(
+			"action" => "list",
+			"table" => "question",
+			"idSetter" => $idSetter,
+			"idTest" => $idTest,
+			"records" => $records,
+		);
+	}
+
+	private function findCurrent($idTest)
 	{
 		$sql = <<<END_SQL
 SELECT indexSetter
@@ -214,7 +315,7 @@ ORDER BY indexSetter;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idTest" => $this->idTest,
+			":idTest" => $idTest,
 		));
 		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		foreach ($rows as $row)
@@ -223,7 +324,7 @@ END_SQL;
 		}
 	}
 
-	private function findRequired()
+	private function findRequired($idSetter, $keywords)
 	{
 		$sql = <<<END_SQL
 SELECT theWord, indexSetter
@@ -233,14 +334,14 @@ ORDER BY indexSetter;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idSetter" => $this->idSetter,
+			":idSetter" => $idSetter,
 		));
 		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 		// If there are already some keywords, then take the next index, else start at 1 ...
 		$count = count($rows);
 		$freeIndex = $count > 0 ? $rows[$count - 1]["indexSetter"] + 1 : 1;
-		foreach ($this->keywords as $theWord)
+		foreach ($keywords as $theWord)
 		{
 			$found = false;
 			foreach ($rows as $row)
@@ -260,22 +361,22 @@ END_SQL;
 		}
 	}
 
-	private function createTestRecord()
+	private function createTestRecord($idSetter)
 	{
 		$sql = <<<END_SQL
-INSERT INTO test (idSetter, name, descr, added)
-VALUES (:idSetter, :name, :descr, now());
+INSERT INTO test (idSetter, identifier, descr, added)
+VALUES (:idSetter, :ident, :descr, now());
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idSetter" => $this->idSetter,
-			":name" => $this->name,
+			":idSetter" => $idSetter,
+			":ident" => $this->ident,
 			":descr" => $this->descr,
 		));
-		$this->idTest = $this->dbx->lastInsertId();
+		return $this->dbx->lastInsertId();
 	}
 
-	private function addNewWords()
+	private function addNewWords($idSetter)
 	{
 		foreach ($this->newWords as $indexSetter => $theWord)
 		{
@@ -285,14 +386,14 @@ VALUES (:idSetter, :indexSetter, :theWord);
 END_SQL;
 			$stmt = $this->dbx->prepare($sql);
 			$stmt->execute(array(
-				":idSetter" => $this->idSetter,
+				":idSetter" => $idSetter,
 				":indexSetter" => $indexSetter,
 				":theWord" => $theWord,
 			));
 		}
 	}
 
-	private function removeOldLinks()
+	private function removeOldLinks($idTest)
 	{
 		foreach (array_diff($this->curLinks, $this->reqLinks) as $indexSetter)
 		{
@@ -302,13 +403,13 @@ WHERE idTest=:idTest AND indexSetter=:indexSetter;
 END_SQL;
 			$stmt = $this->dbx->prepare($sql);
 			$stmt->execute(array(
-				":idTest" => $this->idTest,
+				":idTest" => $idTest,
 				":indexSetter" => $indexSetter,
 			));
 		}
 	}
 
-	private function addNewLinks()
+	private function addNewLinks($idTest)
 	{
 		foreach (array_diff($this->reqLinks, $this->curLinks) as $indexSetter)
 		{
@@ -318,28 +419,28 @@ VALUES (:idTest, :indexSetter);
 END_SQL;
 			$stmt = $this->dbx->prepare($sql);
 			$stmt->execute(array(
-				":idTest" => $this->idTest,
+				":idTest" => $idTest,
 				":indexSetter" => $indexSetter,
 			));
 		}
 	}
 
-	private function updateTestRecord()
+	private function updateTestRecord($idTest)
 	{
 		$sql = <<<END_SQL
 UPDATE test
-SET name=:name, descr=:descr
+SET identifier=:ident, descr=:descr
 WHERE idTest=:idTest;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idTest" => $this->idTest,
-			":name" => $this->name,
+			":idTest" => $idTest,
+			":ident" => $this->ident,
 			":descr" => $this->descr,
 		));
 	}
 
-	private function deleteTestRecord()
+	private function deleteTestRecord($idTest)
 	{
 		$sql = <<<END_SQL
 DELETE FROM test, test_key
@@ -350,7 +451,60 @@ WHERE test.idTest=:idTest;
 END_SQL;
 		$stmt = $this->dbx->prepare($sql);
 		$stmt->execute(array(
-			":idTest" => $this->idTest,
+			":idTest" => $idTest,
 		));
+	}
+
+	private function createQuestionRecord($ident, $query)
+	{
+		$sql = <<<END_SQL
+INSERT INTO question (query, identifier)
+VALUES (:query, :ident);
+END_SQL;
+		$stmt = $this->dbx->prepare($sql);
+		$stmt->execute(array(
+			":query" => $query,
+			":ident" => $ident,
+		));
+		return $this->dbx->lastInsertId();
+	}
+
+	private function createAnswerRecord($idQuestion, $reply)
+	{
+		$sql = <<<END_SQL
+INSERT INTO answer (idQuestion, reply)
+VALUES (:idQuestion, :reply);
+END_SQL;
+		$stmt = $this->dbx->prepare($sql);
+		$stmt->execute(array(
+			":idQuestion" => $idQuestion,
+			":reply" => $reply,
+		));
+	}
+
+	private function createTestQuestionRecord($idTest, $idQuestion, $sequence)
+	{
+		$sql = <<<END_SQL
+INSERT INTO test_question (idTest, idQuestion, sequence)
+VALUES (:idTest, :idQuestion, :sequence);
+END_SQL;
+		$stmt = $this->dbx->prepare($sql);
+		$stmt->execute(array(
+			":idTest" => $idTest,
+			":idQuestion" => $idQuestion,
+			":sequence" => $sequence,
+		));
+	}
+
+	private function deleteQuestionRecord($idQuestion)
+	{
+		$sql = <<<END_SQL
+DELETE FROM question
+WHERE question.idQuestion=:idQuestion;
+END_SQL;
+		$stmt = $this->dbx->prepare($sql);
+		$stmt->execute(array(
+			":idQuestion" => $idQuestion,
+		));		
 	}
 }

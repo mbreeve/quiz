@@ -13,7 +13,7 @@ function TestsRoot(parent, data)
 	this.$divMenu.empty();
 	this.$divForm = $("#" + data.html.divForm);
 	this.$divForm.empty();
-	this.idSetter = data.setter.idSetter;
+	this.idLogged = data.logged.idLogged;
 
 	this.enter = function()
 	{
@@ -23,10 +23,10 @@ function TestsRoot(parent, data)
 			method: "loginSetter",
 			args:
 			{
-				idLogged: this.idSetter
+				idLogged: this.idLogged
 			}
 		});
-	}
+	};
 
 	// Get the tree builder object, creating if necessary
 	this.getTreeBuilder = function()
@@ -47,5 +47,5 @@ function TestsRoot(parent, data)
 	this.resume = function()
 	{
 		this.launch.exitTests();
-	}
+	};
 }
